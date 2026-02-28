@@ -782,3 +782,27 @@ def page_admin():
                         st.rerun()
                     except sqlite3.IntegrityError:
                         st.error("Usuário já existe.") def main():
+                            def main():
+    st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide")
+    inject_css()
+    init_db()
+
+    if not get_user():
+        page_login()
+        return
+
+    sidebar_header()
+    page = st.sidebar.radio("Menu", ["Dashboard", "Lançamento Diário", "Resumo Mensal", "Indicadores", "Admin"])
+    if page == "Dashboard":
+        page_dashboard()
+    elif page == "Lançamento Diário":
+        page_daily_entry()
+    elif page == "Resumo Mensal":
+        page_monthly_summary()
+    elif page == "Indicadores":
+        page_technician_kpis()
+    elif page == "Admin":
+        page_admin()
+
+if __name__ == "__main__":
+    main()

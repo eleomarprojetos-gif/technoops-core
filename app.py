@@ -5,7 +5,43 @@ import hashlib
 import secrets
 from dataclasses import dataclass
 import pandas as pd
-import streamlit as st
+import streamlit as st 
+st.markdown("""
+<style>
+
+/* ====== HEADER SUPERIOR ====== */
+header[data-testid="stHeader"] {
+    background-color: #A64D9A;
+}
+
+/* ====== BORDA DOS INPUTS ====== */
+.stTextInput>div>div>input {
+    border: 2px solid #FFC107;
+    color: white;
+    font-size: 16px;
+}
+
+/* ====== LABEL DOS CAMPOS ====== */
+label {
+    color: white !important;
+    font-size: 16px !important;
+}
+
+/* ====== TEXTO DIGITADO ====== */
+input {
+    color: white !important;
+}
+
+/* ====== BOTÃO ENTRAR ====== */
+.stButton>button {
+    background-color: #A64D9A;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "technoops.db")
 

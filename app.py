@@ -5,7 +5,41 @@ import hashlib
 import secrets
 from dataclasses import dataclass
 import pandas as pd
-import streamlit as st 
+import streamlit as st
+st.markdown("""
+<style>
+
+/* ====== COR DA BARRA SUPERIOR ====== */
+header[data-testid="stHeader"] {
+    background-color: #A64D9A;
+}
+
+/* ====== INPUT TEXTO ====== */
+.stTextInput input {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 16px !important;
+    background-color: #1E1E1E !important;
+}
+
+/* ====== INPUT SENHA ====== */
+.stTextInput input[type="password"] {
+    color: white !important;
+}
+
+/* ====== PLACEHOLDER ====== */
+.stTextInput input::placeholder {
+    color: #CCCCCC !important;
+}
+
+/* ====== TEXTO SELECT ====== */
+.stSelectbox div {
+    color: white !important;
+    font-size: 16px !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 st.markdown("""
 <style>
 

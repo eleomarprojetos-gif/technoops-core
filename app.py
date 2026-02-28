@@ -712,13 +712,16 @@ tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta M
             if col3.button("Editar", key=f"btn_edit_team_{rid}"):
                 st.session_state.edit_team_rid = rid
                 st.rerun()
-    with tabs[0]:
+with tabs[0]:
     admin_table_editor("Técnicos", "technicians", u.company_id, "tech")
-    with tabs[1]:
-        admin_table_editor("Equipes", "teams", u.company_id, "team")
-    with tabs[2]:
-        admin_table_editor("Regiões", "regions", u.company_id, "reg")
-    with tabs[3]:
+
+with tabs[1]:
+    admin_table_editor("Equipes", "teams", u.company_id, "team")
+
+with tabs[2]:
+    admin_table_editor("Regiões", "regions", u.company_id, "reg")
+
+with tabs[3]:
         st.subheader("Serviços e Valores Padrão")
         conn = get_conn()
         rows = fetch_all(conn, """

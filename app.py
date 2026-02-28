@@ -141,6 +141,14 @@ def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
     digest = _pbkdf2_hash(password, salt)
     return f"pbkdf2_sha256${salt}${digest}"
+    def update_user_password(company_id: int, username: str, new_password: str):
+    conn = get_conn()
+    conn.execute("""
+        UPDATE users
+        SET password_hash=?
+        WHERE company_id=? AND username=?
+    """, (hash_password(new_password), company_id, username))
+    conn.commit()
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)

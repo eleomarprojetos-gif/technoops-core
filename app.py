@@ -782,7 +782,7 @@ def page_admin():
                         st.rerun()
                     except sqlite3.IntegrityError:
                         st.error("Usuário já existe.")
-                           def main():
+def main():
     st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide")
     inject_css()
     init_db()

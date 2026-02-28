@@ -6,6 +6,44 @@ import secrets
 from dataclasses import dataclass
 import pandas as pd
 import streamlit as st
+# ==============================
+# 🎨 ESTILO INPUTS RESUMO / INDICADORES
+# ==============================
+
+st.markdown("""
+<style>
+
+/* 🔶 Selectbox (Ano / Mês) */
+div[data-baseweb="select"] > div {
+    border: 2px solid #FFC107 !important;
+    border-radius: 6px !important;
+    background-color: #1E1E2F !important;
+    color: white !important;
+    font-size: 16px !important;
+}
+
+/* Texto dentro da Selectbox */
+div[data-baseweb="select"] span {
+    color: white !important;
+    font-size: 16px !important;
+}
+
+/* 🔶 Inputs Numéricos */
+input[type="number"] {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 16px !important;
+}
+
+/* 🔶 Inputs de Data */
+input[type="date"] {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 16px !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 st.markdown("""
 <style>
 

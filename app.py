@@ -165,8 +165,16 @@ def init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS monthly_goals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL,
-        goal_value REAL NOT NULL,
+        goal_value REAL NOT NULL DEFAULT 0,
+        goal_ativ_day REAL NOT NULL DEFAULT 0,
+        goal_manu_day REAL NOT NULL DEFAULT 0,
         UNIQUE(company_id, year, month), FOREIGN KEY(company_id) REFERENCES companies(id));""")
+    # Migração: adiciona colunas se a tabela já existia sem elas
+    for col, default in [("goal_ativ_day", 0), ("goal_manu_day", 0)]:
+        try:
+            cur.execute(f"ALTER TABLE monthly_goals ADD COLUMN {col} REAL NOT NULL DEFAULT {default}")
+        except Exception:
+            pass
     cur.execute("""CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL, entry_date TEXT NOT NULL,
@@ -307,6 +315,16 @@ def sidebar_header():
     st.sidebar.divider()
 
 # ==============================
+# HELPER — dias úteis seg-sáb
+# ==============================
+def dias_uteis_mes(year: int, month: int) -> list:
+    """Retorna lista de datas úteis (seg-sáb) do mês."""
+    import calendar
+    _, n = calendar.monthrange(year, month)
+    return [dt.date(year, month, d) for d in range(1, n + 1)
+            if dt.date(year, month, d).weekday() < 6]  # 0=seg … 5=sáb
+
+# ==============================
 # DASHBOARD
 # ==============================
 def page_dashboard():
@@ -316,20 +334,28 @@ def page_dashboard():
     conn  = get_conn()
     st.header("Dashboard")
 
-    rows = fetch_all(conn, "SELECT quantity, unit_value FROM entries WHERE company_id=? AND entry_date=?",
-                     (u.company_id, today.isoformat()))
-    total_services = sum(r["quantity"] for r in rows) if rows else 0
-    total_revenue  = sum(r["quantity"] * r["unit_value"] for r in rows) if rows else 0
+    ym = f"{today.year:04d}-{today.month:02d}"
 
-    ym     = f"{today.year:04d}-{today.month:02d}"
-    m_rows = fetch_all(conn, "SELECT quantity, unit_value FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
-                       (u.company_id, ym))
+    # ── Receitas ──────────────────────────────────────────────────────
+    rows_today = fetch_all(conn,
+        "SELECT quantity, unit_value FROM entries WHERE company_id=? AND entry_date=?",
+        (u.company_id, today.isoformat()))
+    total_services = sum(r["quantity"] for r in rows_today) if rows_today else 0
+    total_revenue  = sum(r["quantity"] * r["unit_value"] for r in rows_today) if rows_today else 0
+
+    m_rows     = fetch_all(conn,
+        "SELECT quantity, unit_value FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
+        (u.company_id, ym))
     m_revenue  = sum(r["quantity"] * r["unit_value"] for r in m_rows) if m_rows else 0
-    goal       = fetch_one(conn, "SELECT goal_value FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
-                           (u.company_id, today.year, today.month))
-    goal_value = float(goal["goal_value"]) if goal else 0.0
-    pct        = (m_revenue / goal_value * 100.0) if goal_value > 0 else None
 
+    goal_row   = fetch_one(conn,
+        "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
+        (u.company_id, today.year, today.month))
+    goal_value     = float(goal_row["goal_value"])     if goal_row else 0.0
+    goal_ativ_day  = float(goal_row["goal_ativ_day"])  if goal_row else 0.0
+    goal_manu_day  = float(goal_row["goal_manu_day"])  if goal_row else 0.0
+
+    # ── KPI cards topo ────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Serviços hoje</div>"
@@ -341,12 +367,126 @@ def page_dashboard():
         st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita do mês</div>"
                     f"<div class='techno-value'>R$ {m_revenue:,.2f}</div></div>", unsafe_allow_html=True)
     with c4:
-        if goal_value > 0 and pct is not None:
-            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Meta atingida</div>"
+        if goal_value > 0:
+            pct = m_revenue / goal_value * 100
+            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>% Meta Faturamento</div>"
                         f"<div class='techno-value'>{pct:.0f}%</div></div>", unsafe_allow_html=True)
         else:
             st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Meta do mês</div>"
                         f"<div class='techno-value'>—</div></div>", unsafe_allow_html=True)
+
+    # ── Cálculos para os gauges ───────────────────────────────────────
+    dias_uteis   = dias_uteis_mes(today.year, today.month)
+    total_uteis  = len(dias_uteis)
+    dias_passados = sum(1 for d in dias_uteis if d <= today)
+    dias_restantes = total_uteis - dias_passados
+
+    # Gauge 1 — Faturamento
+    if goal_value > 0 and total_uteis > 0:
+        meta_dia_fat    = goal_value / total_uteis
+        receita_esperada = meta_dia_fat * dias_passados   # o que deveria ter faturado até hoje
+        pct_fat          = min(m_revenue / receita_esperada * 100, 200) if receita_esperada > 0 else 0
+        ritmo_atual      = m_revenue / dias_passados if dias_passados > 0 else 0
+        projecao_fim     = m_revenue + ritmo_atual * dias_restantes
+
+        if pct_fat >= 95:   cor_fat, status_fat = "#2ecc71", "No alvo 🟢"
+        elif pct_fat >= 75: cor_fat, status_fat = "#f39c12", "Atenção 🟠"
+        else:               cor_fat, status_fat = "#e74c3c", "Abaixo 🔴"
+
+        label_fat = (f"R$ {m_revenue:,.0f} / R$ {receita_esperada:,.0f} esperado<br>"
+                     f"Projeção fim do mês: R$ {projecao_fim:,.0f}<br>"
+                     f"Dias úteis: {dias_passados}/{total_uteis} | Meta/dia: R$ {meta_dia_fat:,.0f}")
+    else:
+        pct_fat, cor_fat, status_fat = 0, "#555", "Meta não configurada"
+        label_fat = "Configure a meta em Admin → Meta Mensal"
+
+    # Gauge 2 — Ativações
+    if goal_ativ_day > 0 and dias_passados > 0:
+        ativ_rows = fetch_all(conn, """
+            SELECT SUM(e.quantity) as total
+            FROM entries e JOIN service_types st ON st.id=e.service_type_id
+            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='ativacao'
+        """, (u.company_id, ym))
+        ativ_total    = float(ativ_rows[0]["total"] or 0)
+        ativ_esperada = goal_ativ_day * dias_passados
+        pct_ativ      = min(ativ_total / ativ_esperada * 100, 200) if ativ_esperada > 0 else 0
+        media_ativ    = ativ_total / dias_passados
+
+        if pct_ativ >= 95:   cor_ativ, status_ativ = "#2ecc71", "No alvo 🟢"
+        elif pct_ativ >= 75: cor_ativ, status_ativ = "#f39c12", "Atenção 🟠"
+        else:                cor_ativ, status_ativ = "#e74c3c", "Abaixo 🔴"
+
+        label_ativ = (f"{ativ_total:.0f} ativ / {ativ_esperada:.0f} esperadas<br>"
+                      f"Média atual: {media_ativ:.1f}/dia | Meta: {goal_ativ_day:.1f}/dia")
+    else:
+        pct_ativ, cor_ativ, status_ativ = 0, "#555", "Meta não configurada"
+        label_ativ = "Configure a meta em Admin → Meta Mensal"
+
+    # Gauge 3 — Manutenções
+    if goal_manu_day > 0 and dias_passados > 0:
+        manu_rows = fetch_all(conn, """
+            SELECT SUM(e.quantity) as total
+            FROM entries e JOIN service_types st ON st.id=e.service_type_id
+            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='manutencao'
+        """, (u.company_id, ym))
+        manu_total    = float(manu_rows[0]["total"] or 0)
+        manu_esperada = goal_manu_day * dias_passados
+        pct_manu      = min(manu_total / manu_esperada * 100, 200) if manu_esperada > 0 else 0
+        media_manu    = manu_total / dias_passados
+
+        if pct_manu >= 95:   cor_manu, status_manu = "#2ecc71", "No alvo 🟢"
+        elif pct_manu >= 75: cor_manu, status_manu = "#f39c12", "Atenção 🟠"
+        else:                cor_manu, status_manu = "#e74c3c", "Abaixo 🔴"
+
+        label_manu = (f"{manu_total:.0f} manu / {manu_esperada:.0f} esperadas<br>"
+                      f"Média atual: {media_manu:.1f}/dia | Meta: {goal_manu_day:.1f}/dia")
+    else:
+        pct_manu, cor_manu, status_manu = 0, "#555", "Meta não configurada"
+        label_manu = "Configure a meta em Admin → Meta Mensal"
+
+    # ── Gauges HTML ───────────────────────────────────────────────────
+    st.divider()
+
+    def gauge_html(pct, cor, titulo, status, label, cid):
+        # Clamp 0–100 para o arco visual, mas mostra valor real
+        arco = min(max(pct, 0), 100)
+        # SVG arc: círculo de raio 70, centro 90,90, comprimento total = π*70 ≈ 220
+        import math
+        r = 70
+        circ = math.pi * r  # semicírculo
+        dash_val  = arco / 100 * circ
+        dash_rem  = circ - dash_val
+        return f"""
+        <div style="background:#1a1a2e;border-radius:18px;padding:20px 16px 12px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:0.9rem;color:#ccc;margin-bottom:8px;font-weight:600;">{titulo}</div>
+            <svg viewBox="0 0 180 100" width="200" height="115">
+                <!-- trilha cinza -->
+                <path d="M 20 90 A 70 70 0 0 1 160 90"
+                      fill="none" stroke="#2a2a3e" stroke-width="16" stroke-linecap="round"/>
+                <!-- arco colorido -->
+                <path d="M 20 90 A 70 70 0 0 1 160 90"
+                      fill="none" stroke="{cor}" stroke-width="16" stroke-linecap="round"
+                      stroke-dasharray="{dash_val:.1f} {dash_rem:.1f}"
+                      style="transition:stroke-dasharray 0.6s ease;"/>
+                <!-- texto central -->
+                <text x="90" y="82" text-anchor="middle"
+                      font-size="22" font-weight="700" fill="white">{pct:.0f}%</text>
+            </svg>
+            <div style="font-size:0.85rem;font-weight:600;color:{cor};margin-top:4px;">{status}</div>
+            <div style="font-size:0.75rem;color:#aaa;margin-top:6px;line-height:1.5;">{label}</div>
+        </div>
+        """
+
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        st.markdown(gauge_html(pct_fat,  cor_fat,  "💰 Meta de Faturamento", status_fat,  label_fat,  "fat"),
+                    unsafe_allow_html=True)
+    with g2:
+        st.markdown(gauge_html(pct_ativ, cor_ativ, "⚡ Meta de Ativações",   status_ativ, label_ativ, "ativ"),
+                    unsafe_allow_html=True)
+    with g3:
+        st.markdown(gauge_html(pct_manu, cor_manu, "🔧 Meta de Manutenções", status_manu, label_manu, "manu"),
+                    unsafe_allow_html=True)
 
 # ==============================
 # LANÇAMENTO DIÁRIO
@@ -936,14 +1076,36 @@ def page_admin():
         today = dt.date.today()
         year  = st.number_input("Ano da meta", min_value=2020, max_value=2100, value=today.year,  step=1, key="gy")
         month = st.number_input("Mês da meta", min_value=1,    max_value=12,   value=today.month, step=1, key="gm")
-        cur   = fetch_one(conn, "SELECT goal_value FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
+        cur   = fetch_one(conn, "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
                           (u.company_id, int(year), int(month)))
-        goal  = st.number_input("Meta (R$)", min_value=0.0, value=float(cur["goal_value"]) if cur else 0.0, step=100.0)
-        if st.button("Salvar meta", type="primary"):
-            conn.execute("""INSERT INTO monthly_goals(company_id, year, month, goal_value) VALUES (?,?,?,?)
-                            ON CONFLICT(company_id, year, month) DO UPDATE SET goal_value=excluded.goal_value""",
-                         (u.company_id, int(year), int(month), float(goal)))
-            conn.commit(); st.success("Meta salva.")
+
+        st.markdown("---")
+        st.markdown("**💰 Meta de Faturamento**")
+        goal = st.number_input("Meta total de receita (R$)", min_value=0.0,
+                               value=float(cur["goal_value"]) if cur else 0.0, step=100.0)
+
+        st.markdown("---")
+        st.markdown("**⚡ Meta de Ativações — toda a equipe**")
+        goal_ativ = st.number_input("Meta diária de ativações (total da equipe)", min_value=0.0,
+                                    value=float(cur["goal_ativ_day"]) if cur else 0.0, step=1.0,
+                                    help="Ex: 4 técnicos solo → meta 12/dia")
+
+        st.markdown("---")
+        st.markdown("**🔧 Meta de Manutenções — toda a equipe**")
+        goal_manu = st.number_input("Meta diária de manutenções (total da equipe)", min_value=0.0,
+                                    value=float(cur["goal_manu_day"]) if cur else 0.0, step=1.0,
+                                    help="Deixe 0 se não houver meta de manutenção no mês")
+
+        st.markdown("---")
+        if st.button("Salvar metas", type="primary"):
+            conn.execute("""INSERT INTO monthly_goals(company_id, year, month, goal_value, goal_ativ_day, goal_manu_day)
+                            VALUES (?,?,?,?,?,?)
+                            ON CONFLICT(company_id, year, month) DO UPDATE SET
+                                goal_value=excluded.goal_value,
+                                goal_ativ_day=excluded.goal_ativ_day,
+                                goal_manu_day=excluded.goal_manu_day""",
+                         (u.company_id, int(year), int(month), float(goal), float(goal_ativ), float(goal_manu)))
+            conn.commit(); st.success("Metas salvas com sucesso!")
 
     with tabs[5]:
         st.subheader("Usuários e permissões")
@@ -1015,13 +1177,33 @@ def main():
         return
 
     sidebar_header()
-    page = st.sidebar.radio("Menu", ["Dashboard", "Lançamento Diário", "Resumo Mensal", "Indicadores", "Admin"])
+    u = get_user()
 
-    if   page == "Dashboard":        page_dashboard()
-    elif page == "Lançamento Diário": page_daily_entry()
-    elif page == "Resumo Mensal":    page_monthly_summary()
-    elif page == "Indicadores":      page_technician_kpis()
-    elif page == "Admin":            page_admin()
+    # Monta menu conforme o role
+    menu_opcoes = ["Dashboard", "Resumo Mensal", "Indicadores"]
+    if u.role in {"admin", "operator"}:
+        menu_opcoes.insert(1, "Lançamento Diário")
+    if u.role == "admin":
+        menu_opcoes.append("Admin")
+
+    page = st.sidebar.radio("Menu", menu_opcoes)
+
+    if page == "Dashboard":
+        page_dashboard()
+    elif page == "Lançamento Diário":
+        if u.role in {"admin", "operator"}:
+            page_daily_entry()
+        else:
+            st.error("Acesso não permitido.")
+    elif page == "Resumo Mensal":
+        page_monthly_summary()
+    elif page == "Indicadores":
+        page_technician_kpis()
+    elif page == "Admin":
+        if u.role == "admin":
+            page_admin()
+        else:
+            st.error("Acesso não permitido.")
 
 if __name__ == "__main__":
     main()

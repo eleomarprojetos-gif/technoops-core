@@ -660,25 +660,48 @@ def page_technician_kpis():
             "StManu":           st_m,
         })
 
-    # ── Cards: Ativação ──────────────────────────────────────────────
-    st.subheader("🚦 Ativação — Desempenho por Técnico")
-    st.caption("Meta Ativação: Solo = 3/dia  |  Equipe = 4/dia")
+    # ── Cards unificados por técnico ─────────────────────────────────
+    st.subheader("🚦 Desempenho por Técnico")
+    st.caption("Ativação: Solo = 3/dia | Equipe = 4/dia    •    Manutenção: Solo = 4/dia | Equipe = 6/dia")
 
     n_cols = min(len(perf_data), 3)
     cols   = st.columns(n_cols)
     for i, p in enumerate(perf_data):
         with cols[i % n_cols]:
             st.markdown(f"""
-            <div class="{p['CorAtiv']}">
-                <div class="kpi-name">{p['SemAtiv']} {p['Tecnico']}</div>
-                <div class="kpi-avg">{p['MediaAtiv']:.2f}
-                    <span style="font-size:1rem;color:#ccc;"> ativ/dia</span>
+            <div style="background:#1e1e2f;border:1px solid rgba(255,255,255,0.12);
+                        border-radius:16px;padding:16px 18px;margin-bottom:10px;">
+                <div style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;">
+                    👤 {p['Tecnico']}
+                    &nbsp;<span style="font-size:0.78rem;color:#aaa;">
+                        {p['DiasTrabalh']}d ({p['DiasSolo']}solo+{p['DiasEquipe']}eq)
+                    </span>
                 </div>
-                <div class="kpi-detail">
-                    Meta: {p['MetaAtivMedia']:.1f}/dia &nbsp;|&nbsp; Status: <b>{p['StAtiv']}</b><br>
-                    Total ativ: {p['AtivTotal']:.0f} &nbsp;|&nbsp;
-                    Dias: {p['DiasTrabalh']} ({p['DiasSolo']} solo + {p['DiasEquipe']} eq)<br>
-                    Meta cumprida: {p['PctAtiv']:.0f}% &nbsp;|&nbsp;
+                <div style="display:flex;gap:10px;">
+                    <div style="flex:1;background:{'#0d3320' if p['CorAtiv']=='kpi-green' else '#3d2400' if p['CorAtiv']=='kpi-orange' else '#3d0000'};
+                                border:1px solid {'#2ecc71' if p['CorAtiv']=='kpi-green' else '#f39c12' if p['CorAtiv']=='kpi-orange' else '#e74c3c'};
+                                border-radius:10px;padding:10px 12px;">
+                        <div style="font-size:0.78rem;color:#ccc;">⚡ Ativação</div>
+                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaAtiv']:.2f}
+                            <span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
+                        <div style="font-size:0.75rem;color:#ccc;">
+                            {p['SemAtiv']} {p['StAtiv']}<br>
+                            Meta {p['MetaAtivMedia']:.1f} &nbsp;|&nbsp; {p['PctAtiv']:.0f}% cumprido
+                        </div>
+                    </div>
+                    <div style="flex:1;background:{'#0d3320' if p['CorManu']=='kpi-green' else '#3d2400' if p['CorManu']=='kpi-orange' else '#3d0000'};
+                                border:1px solid {'#2ecc71' if p['CorManu']=='kpi-green' else '#f39c12' if p['CorManu']=='kpi-orange' else '#e74c3c'};
+                                border-radius:10px;padding:10px 12px;">
+                        <div style="font-size:0.78rem;color:#ccc;">🔧 Manutenção</div>
+                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaManu']:.2f}
+                            <span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
+                        <div style="font-size:0.75rem;color:#ccc;">
+                            {p['SemManu']} {p['StManu']}<br>
+                            Meta {p['MetaManuMedia']:.1f} &nbsp;|&nbsp; {p['PctManu']:.0f}% cumprido
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;font-size:0.78rem;color:#aaa;text-align:right;">
                     Receita: R$ {p['ReceitaGerada']:,.0f}
                 </div>
             </div>
@@ -686,38 +709,15 @@ def page_technician_kpis():
 
     st.divider()
 
-    # ── Cards: Manutenção ────────────────────────────────────────────
-    st.subheader("🔧 Manutenção — Desempenho por Técnico")
-    st.caption("Meta Manutenção: Solo = 4/dia  |  Equipe = 6/dia")
-
-    cols2 = st.columns(n_cols)
-    for i, p in enumerate(perf_data):
-        with cols2[i % n_cols]:
-            st.markdown(f"""
-            <div class="{p['CorManu']}">
-                <div class="kpi-name">{p['SemManu']} {p['Tecnico']}</div>
-                <div class="kpi-avg">{p['MediaManu']:.2f}
-                    <span style="font-size:1rem;color:#ccc;"> manu/dia</span>
-                </div>
-                <div class="kpi-detail">
-                    Meta: {p['MetaManuMedia']:.1f}/dia &nbsp;|&nbsp; Status: <b>{p['StManu']}</b><br>
-                    Total manu: {p['ManuTotal']:.0f} &nbsp;|&nbsp;
-                    Dias: {p['DiasTrabalh']} ({p['DiasSolo']} solo + {p['DiasEquipe']} eq)<br>
-                    Meta cumprida: {p['PctManu']:.0f}%
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.divider()
-
-    # ── Gráficos lado a lado ─────────────────────────────────────────
-    st.subheader("📊 Comparativo Gráfico")
+    # ── Gráfico agrupado único: ativação + manutenção por técnico ────
+    st.subheader("📊 Comparativo — Ativação & Manutenção por Técnico")
 
     import json
-    nomes       = [p["Tecnico"] for p in perf_data]
-    medias_ativ = [round(p["MediaAtiv"], 2)     for p in perf_data]
+
+    nomes       = [p["Tecnico"]                for p in perf_data]
+    medias_ativ = [round(p["MediaAtiv"], 2)    for p in perf_data]
     metas_ativ  = [round(p["MetaAtivMedia"], 2) for p in perf_data]
-    medias_manu = [round(p["MediaManu"], 2)     for p in perf_data]
+    medias_manu = [round(p["MediaManu"], 2)    for p in perf_data]
     metas_manu  = [round(p["MetaManuMedia"], 2) for p in perf_data]
 
     def hex_cor(p, key):
@@ -731,68 +731,94 @@ def page_technician_kpis():
 
     chart_html = f"""
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <div style="display:flex;gap:16px;background:#0f0f0f;padding:8px;">
-
-      <div style="flex:1;background:#1a1a2e;border-radius:16px;padding:20px;">
-        <p style="color:#fff;font-weight:600;margin-bottom:12px;">⚡ Ativação</p>
-        <canvas id="chartAtiv" height="140"></canvas>
-      </div>
-
-      <div style="flex:1;background:#1a1a2e;border-radius:16px;padding:20px;">
-        <p style="color:#fff;font-weight:600;margin-bottom:12px;">🔧 Manutenção</p>
-        <canvas id="chartManu" height="140"></canvas>
-      </div>
-
+    <div style="background:#1a1a2e;border-radius:16px;padding:24px;">
+      <canvas id="kpiUnified" height="100"></canvas>
     </div>
     <script>
-    const optBase = (metaLabel) => ({{
-      responsive: true,
-      plugins: {{
-        legend: {{ labels: {{ color:'#fff', font:{{ size:12 }} }} }},
-        tooltip: {{ callbacks: {{ label: ctx => ctx.dataset.label+': '+ctx.parsed.y.toFixed(2) }} }}
+    new Chart(document.getElementById('kpiUnified').getContext('2d'), {{
+      type: 'bar',
+      data: {{
+        labels: {json.dumps(nomes)},
+        datasets: [
+          {{
+            label: '⚡ Ativação média/dia',
+            data: {json.dumps(medias_ativ)},
+            backgroundColor: {json.dumps(cores_ativ)},
+            borderColor: {json.dumps(cores_ativ)},
+            borderWidth: 2,
+            borderRadius: 6,
+            barPercentage: 0.4,
+            categoryPercentage: 0.8,
+          }},
+          {{
+            label: '🔧 Manutenção média/dia',
+            data: {json.dumps(medias_manu)},
+            backgroundColor: {json.dumps(["rgba(100,160,255,0.85)" if c=="kpi-green" else "rgba(255,150,50,0.85)" if c=="kpi-orange" else "rgba(220,60,60,0.85)" for c in [p["CorManu"] for p in perf_data]])},
+            borderColor: {json.dumps(["#64a0ff" if c=="kpi-green" else "#ff9632" if c=="kpi-orange" else "#dc3c3c" for c in [p["CorManu"] for p in perf_data]])},
+            borderWidth: 2,
+            borderRadius: 6,
+            barPercentage: 0.4,
+            categoryPercentage: 0.8,
+          }},
+          {{
+            label: 'Meta Ativação',
+            data: {json.dumps(metas_ativ)},
+            type: 'line',
+            borderColor: '#FFC107',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [6, 3],
+            pointBackgroundColor: '#FFC107',
+            pointRadius: 5,
+            fill: false,
+            tension: 0.3,
+            yAxisID: 'y',
+          }},
+          {{
+            label: 'Meta Manutenção',
+            data: {json.dumps(metas_manu)},
+            type: 'line',
+            borderColor: '#a78bfa',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [4, 4],
+            pointBackgroundColor: '#a78bfa',
+            pointRadius: 5,
+            fill: false,
+            tension: 0.3,
+            yAxisID: 'y',
+          }}
+        ]
       }},
-      scales: {{
-        x: {{ ticks:{{ color:'#ccc', font:{{ size:12 }} }}, grid:{{ color:'rgba(255,255,255,0.05)' }} }},
-        y: {{ beginAtZero:true, ticks:{{ color:'#ccc', font:{{ size:12 }} }}, grid:{{ color:'rgba(255,255,255,0.08)' }} }}
+      options: {{
+        responsive: true,
+        interaction: {{ mode: 'index', intersect: false }},
+        plugins: {{
+          legend: {{
+            labels: {{ color: '#fff', font: {{ size: 12 }}, padding: 16 }}
+          }},
+          tooltip: {{
+            callbacks: {{
+              label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2)
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{
+            ticks: {{ color: '#ccc', font: {{ size: 13 }} }},
+            grid: {{ color: 'rgba(255,255,255,0.05)' }}
+          }},
+          y: {{
+            beginAtZero: true,
+            ticks: {{ color: '#ccc', font: {{ size: 13 }} }},
+            grid: {{ color: 'rgba(255,255,255,0.08)' }}
+          }}
+        }}
       }}
-    }});
-
-    new Chart(document.getElementById('chartAtiv').getContext('2d'), {{
-      type:'bar',
-      data:{{
-        labels:{json.dumps(nomes)},
-        datasets:[
-          {{ label:'Média Ativ/Dia', data:{json.dumps(medias_ativ)},
-             backgroundColor:{json.dumps(cores_ativ)}, borderColor:{json.dumps(cores_ativ)},
-             borderWidth:2, borderRadius:8 }},
-          {{ label:'Meta/Dia', data:{json.dumps(metas_ativ)}, type:'line',
-             borderColor:'#FFC107', backgroundColor:'rgba(255,193,7,0.12)',
-             borderWidth:2, borderDash:[6,3], pointBackgroundColor:'#FFC107',
-             pointRadius:5, fill:false, tension:0.3 }}
-        ]
-      }},
-      options: optBase('Meta Ativ')
-    }});
-
-    new Chart(document.getElementById('chartManu').getContext('2d'), {{
-      type:'bar',
-      data:{{
-        labels:{json.dumps(nomes)},
-        datasets:[
-          {{ label:'Média Manu/Dia', data:{json.dumps(medias_manu)},
-             backgroundColor:{json.dumps(cores_manu)}, borderColor:{json.dumps(cores_manu)},
-             borderWidth:2, borderRadius:8 }},
-          {{ label:'Meta/Dia', data:{json.dumps(metas_manu)}, type:'line',
-             borderColor:'#FFC107', backgroundColor:'rgba(255,193,7,0.12)',
-             borderWidth:2, borderDash:[6,3], pointBackgroundColor:'#FFC107',
-             pointRadius:5, fill:false, tension:0.3 }}
-        ]
-      }},
-      options: optBase('Meta Manu')
     }});
     </script>
     """
-    st.components.v1.html(chart_html, height=420)
+    st.components.v1.html(chart_html, height=400)
 
     st.divider()
 

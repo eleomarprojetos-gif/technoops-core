@@ -781,5 +781,4 @@ def page_admin():
                         st.success("Usuário criado.")
                         st.rerun()
                     except sqlite3.IntegrityError:
-                        st.error("Usuário já existe.")
-def main():
+                        st.error("Usuário já existe.") def main():

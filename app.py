@@ -684,41 +684,19 @@ def page_admin():
     u = get_user()
     require_role({"admin"})
     st.header("Admin")
-    
-tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
-  
-        # Modo edição
-        if st.session_state.edit_team_rid == rid:
-            new_name = col1.text_input("Nome da equipe", value=name, key=f"edit_team_name_{rid}")
-            col2.write("✅" if is_active else "❌")
 
-            if col3.button("Salvar", key=f"save_team_{rid}"):
-                if new_name.strip():
-                    db_update_team_name(conn, rid, new_name)
-                    st.session_state.edit_team_rid = None
-                    st.success("Equipe atualizada!")
-                    st.rerun()
-                else:
-                    st.warning("O nome não pode ficar vazio.")
+    tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
 
-            if col4.button("Cancelar", key=f"cancel_edit_team_{rid}"):
-                st.session_state.edit_team_rid = None
-                st.rerun()
+    with tabs[0]:
+        admin_table_editor("Técnicos", "technicians", u.company_id, "tech")
 
-        else:
-            col1.write(name)
-            col2.write("✅" if is_active else "❌")
+    with tabs[1]:
+        admin_table_editor("Equipes", "teams", u.company_id, "team")
 
-            if col3.button("Editar", key=f"btn_edit_team_{rid}"):
-                st.session_state.edit_team_rid = rid
-                st.rerun()
-with tabs[0]:
-    admin_table_editor("Técnicos", "technicians", u.company_id, "tech")
-with tabs[1]:
-    admin_table_editor("Equipes", "teams", u.company_id, "team")
-with tabs[2]:
-    admin_table_editor("Regiões", "regions", u.company_id, "reg")
-with tabs[3]:
+    with tabs[2]:
+        admin_table_editor("Regiões", "regions", u.company_id, "reg")
+
+    with tabs[3]:
         st.subheader("Serviços e Valores Padrão")
         conn = get_conn()
         rows = fetch_all(conn, """
@@ -804,28 +782,3 @@ with tabs[3]:
                         st.rerun()
                     except sqlite3.IntegrityError:
                         st.error("Usuário já existe.")
-
-def main():
-    st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide")
-    inject_css()
-    init_db()
-
-    if not get_user():
-        page_login()
-        return
-
-    sidebar_header()
-    page = st.sidebar.radio("Menu", ["Dashboard", "Lançamento Diário", "Resumo Mensal", "Indicadores", "Admin"])
-    if page == "Dashboard":
-        page_dashboard()
-    elif page == "Lançamento Diário":
-        page_daily_entry()
-    elif page == "Resumo Mensal":
-        page_monthly_summary()
-    elif page == "Indicadores":
-        page_technician_kpis()
-    elif page == "Admin":
-        page_admin()
-
-if __name__ == "__main__":
-    main()

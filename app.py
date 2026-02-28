@@ -846,61 +846,6 @@ def page_admin():
                         st.rerun()
                     except sqlite3.IntegrityError:
                         st.error("Usuário já existe.")
-                                st.divider()
-        st.subheader("Ações em usuários")
-
-        # Selecionar usuário
-        usernames = df["username"].tolist() if not df.empty else []
-        if not usernames:
-            st.info("Nenhum usuário cadastrado.")
-        else:
-            sel_user = st.selectbox("Selecione um usuário", usernames, key="sel_user_admin")
-
-            # Puxar dados do usuário selecionado
-            row = fetch_one(conn, """
-                SELECT username, role, is_active
-                FROM users
-                WHERE company_id=? AND username=?
-            """, (u.company_id, sel_user))
-            if row:
-                is_active = int(row["is_active"]) == 1
-                role = row["role"]
-
-                c1, c2 = st.columns(2)
-
-                # Ativar/Desativar
-                if c1.button("Desativar usuário" if is_active else "Ativar usuário", use_container_width=True):
-                    conn.execute("""
-                        UPDATE users SET is_active=?
-                        WHERE company_id=? AND username=?
-                    """, (0 if is_active else 1, u.company_id, sel_user))
-                    conn.commit()
-                    st.success("Status atualizado.")
-                    st.rerun()
-
-                # Trocar permissão
-                new_role = c2.selectbox("Permissão", ["admin","operator","viewer"], index=["admin","operator","viewer"].index(role))
-                if st.button("Salvar permissão", use_container_width=True):
-                    conn.execute("""
-                        UPDATE users SET role=?
-                        WHERE company_id=? AND username=?
-                    """, (new_role, u.company_id, sel_user))
-                    conn.commit()
-                    st.success("Permissão atualizada.")
-                    st.rerun()
-
-                st.divider()
-
-                # Resetar senha
-                st.markdown("**Resetar senha do usuário**")
-                new_pass = st.text_input("Nova senha (reset)", type="password", key="reset_pass")
-                new_pass2 = st.text_input("Confirmar nova senha", type="password", key="reset_pass2")
-                if st.button("Resetar senha", type="primary", use_container_width=True):
-                    if not new_pass or new_pass != new_pass2:
-                        st.error("As senhas não conferem.")
-                    else:
-                        update_user_password(u.company_id, sel_user, new_pass)
-                        st.success("Senha resetada com sucesso.")
                         
 def main():
     st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide")

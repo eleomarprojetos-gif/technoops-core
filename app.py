@@ -376,18 +376,24 @@ def page_dashboard():
                         f"<div class='techno-value'>—</div></div>", unsafe_allow_html=True)
 
     # ── Cálculos para os gauges ───────────────────────────────────────
-    dias_uteis   = dias_uteis_mes(today.year, today.month)
-    total_uteis  = len(dias_uteis)
-    dias_passados = sum(1 for d in dias_uteis if d <= today)
-    dias_restantes = total_uteis - dias_passados
+    dias_uteis    = dias_uteis_mes(today.year, today.month)
+    total_uteis   = len(dias_uteis)
+    dias_restantes_uteis = sum(1 for d in dias_uteis if d > today)
+
+    # Dias que de fato tiveram lançamento no mês
+    dias_lancados_rows = fetch_all(conn,
+        "SELECT COUNT(DISTINCT entry_date) as n FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
+        (u.company_id, ym))
+    dias_trabalhados = int(dias_lancados_rows[0]["n"]) if dias_lancados_rows else 0
 
     # Gauge 1 — Faturamento
+    # Compara receita acumulada vs meta proporcional aos dias trabalhados
     if goal_value > 0 and total_uteis > 0:
-        meta_dia_fat    = goal_value / total_uteis
-        receita_esperada = meta_dia_fat * dias_passados   # o que deveria ter faturado até hoje
+        meta_dia_fat     = goal_value / total_uteis
+        receita_esperada = meta_dia_fat * max(dias_trabalhados, 1)
         pct_fat          = min(m_revenue / receita_esperada * 100, 200) if receita_esperada > 0 else 0
-        ritmo_atual      = m_revenue / dias_passados if dias_passados > 0 else 0
-        projecao_fim     = m_revenue + ritmo_atual * dias_restantes
+        ritmo_atual      = m_revenue / dias_trabalhados if dias_trabalhados > 0 else 0
+        projecao_fim     = m_revenue + ritmo_atual * dias_restantes_uteis
 
         if pct_fat >= 95:   cor_fat, status_fat = "#2ecc71", "No alvo 🟢"
         elif pct_fat >= 75: cor_fat, status_fat = "#f39c12", "Atenção 🟠"
@@ -395,51 +401,52 @@ def page_dashboard():
 
         label_fat = (f"R$ {m_revenue:,.0f} / R$ {receita_esperada:,.0f} esperado<br>"
                      f"Projeção fim do mês: R$ {projecao_fim:,.0f}<br>"
-                     f"Dias úteis: {dias_passados}/{total_uteis} | Meta/dia: R$ {meta_dia_fat:,.0f}")
+                     f"Dias trabalhados: {dias_trabalhados} | Meta/dia: R$ {meta_dia_fat:,.0f}")
     else:
         pct_fat, cor_fat, status_fat = 0, "#555", "Meta não configurada"
         label_fat = "Configure a meta em Admin → Meta Mensal"
 
     # Gauge 2 — Ativações
-    if goal_ativ_day > 0 and dias_passados > 0:
-        ativ_rows = fetch_all(conn, """
+    # Compara média real de ativ/dia vs meta/dia configurada
+    if goal_ativ_day > 0:
+        ativ_rows  = fetch_all(conn, """
             SELECT SUM(e.quantity) as total
             FROM entries e JOIN service_types st ON st.id=e.service_type_id
             WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='ativacao'
         """, (u.company_id, ym))
-        ativ_total    = float(ativ_rows[0]["total"] or 0)
-        ativ_esperada = goal_ativ_day * dias_passados
-        pct_ativ      = min(ativ_total / ativ_esperada * 100, 200) if ativ_esperada > 0 else 0
-        media_ativ    = ativ_total / dias_passados
+        ativ_total = float(ativ_rows[0]["total"] or 0)
+        media_ativ = ativ_total / dias_trabalhados if dias_trabalhados > 0 else 0
+        pct_ativ   = min(media_ativ / goal_ativ_day * 100, 200)
 
         if pct_ativ >= 95:   cor_ativ, status_ativ = "#2ecc71", "No alvo 🟢"
         elif pct_ativ >= 75: cor_ativ, status_ativ = "#f39c12", "Atenção 🟠"
         else:                cor_ativ, status_ativ = "#e74c3c", "Abaixo 🔴"
 
-        label_ativ = (f"{ativ_total:.0f} ativ / {ativ_esperada:.0f} esperadas<br>"
-                      f"Média atual: {media_ativ:.1f}/dia | Meta: {goal_ativ_day:.1f}/dia")
+        label_ativ = (f"Média atual: {media_ativ:.1f}/dia | Meta: {goal_ativ_day:.1f}/dia<br>"
+                      f"Total acumulado: {ativ_total:.0f} ativações<br>"
+                      f"Dias trabalhados: {dias_trabalhados} de {total_uteis} úteis")
     else:
         pct_ativ, cor_ativ, status_ativ = 0, "#555", "Meta não configurada"
         label_ativ = "Configure a meta em Admin → Meta Mensal"
 
     # Gauge 3 — Manutenções
-    if goal_manu_day > 0 and dias_passados > 0:
-        manu_rows = fetch_all(conn, """
+    if goal_manu_day > 0:
+        manu_rows  = fetch_all(conn, """
             SELECT SUM(e.quantity) as total
             FROM entries e JOIN service_types st ON st.id=e.service_type_id
             WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='manutencao'
         """, (u.company_id, ym))
-        manu_total    = float(manu_rows[0]["total"] or 0)
-        manu_esperada = goal_manu_day * dias_passados
-        pct_manu      = min(manu_total / manu_esperada * 100, 200) if manu_esperada > 0 else 0
-        media_manu    = manu_total / dias_passados
+        manu_total = float(manu_rows[0]["total"] or 0)
+        media_manu = manu_total / dias_trabalhados if dias_trabalhados > 0 else 0
+        pct_manu   = min(media_manu / goal_manu_day * 100, 200)
 
         if pct_manu >= 95:   cor_manu, status_manu = "#2ecc71", "No alvo 🟢"
         elif pct_manu >= 75: cor_manu, status_manu = "#f39c12", "Atenção 🟠"
         else:                cor_manu, status_manu = "#e74c3c", "Abaixo 🔴"
 
-        label_manu = (f"{manu_total:.0f} manu / {manu_esperada:.0f} esperadas<br>"
-                      f"Média atual: {media_manu:.1f}/dia | Meta: {goal_manu_day:.1f}/dia")
+        label_manu = (f"Média atual: {media_manu:.1f}/dia | Meta: {goal_manu_day:.1f}/dia<br>"
+                      f"Total acumulado: {manu_total:.0f} manutenções<br>"
+                      f"Dias trabalhados: {dias_trabalhados} de {total_uteis} úteis")
     else:
         pct_manu, cor_manu, status_manu = 0, "#555", "Meta não configurada"
         label_manu = "Configure a meta em Admin → Meta Mensal"
@@ -1079,22 +1086,47 @@ def page_admin():
         cur   = fetch_one(conn, "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
                           (u.company_id, int(year), int(month)))
 
+        # Dias úteis do mês selecionado (seg-sáb)
+        dias_uteis_adm = dias_uteis_mes(int(year), int(month))
+        total_uteis_adm = len(dias_uteis_adm)
+
+        st.info(f"📅 O mês {int(month):02d}/{int(year)} tem **{total_uteis_adm} dias úteis** (seg–sáb).")
+
         st.markdown("---")
         st.markdown("**💰 Meta de Faturamento**")
         goal = st.number_input("Meta total de receita (R$)", min_value=0.0,
                                value=float(cur["goal_value"]) if cur else 0.0, step=100.0)
 
         st.markdown("---")
-        st.markdown("**⚡ Meta de Ativações — toda a equipe**")
-        goal_ativ = st.number_input("Meta diária de ativações (total da equipe)", min_value=0.0,
-                                    value=float(cur["goal_ativ_day"]) if cur else 0.0, step=1.0,
-                                    help="Ex: 4 técnicos solo → meta 12/dia")
+        st.markdown("**⚡ Meta de Ativações**")
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
+            n_tec_ativ = st.number_input("Nº de técnicos ativos (ativação)", min_value=0, value=1, step=1,
+                                         help="Quantidade de técnicos que fazem ativação")
+        with col_a2:
+            meta_ativ_por_tec = st.number_input("Meta por técnico/dia (ativação)", min_value=0.0, value=3.0, step=0.5,
+                                                help="Ex: 3 para solo, 4 para equipe")
+        goal_ativ = n_tec_ativ * meta_ativ_por_tec
+        st.markdown(f"**Meta diária calculada: {goal_ativ:.0f} ativações/dia** "
+                    f"({n_tec_ativ} técnicos × {meta_ativ_por_tec:.1f}/dia) → "
+                    f"**{goal_ativ * total_uteis_adm:.0f} no mês**")
 
         st.markdown("---")
-        st.markdown("**🔧 Meta de Manutenções — toda a equipe**")
-        goal_manu = st.number_input("Meta diária de manutenções (total da equipe)", min_value=0.0,
-                                    value=float(cur["goal_manu_day"]) if cur else 0.0, step=1.0,
-                                    help="Deixe 0 se não houver meta de manutenção no mês")
+        st.markdown("**🔧 Meta de Manutenções**")
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            n_tec_manu = st.number_input("Nº de técnicos ativos (manutenção)", min_value=0, value=0, step=1,
+                                          help="Deixe 0 se não houver meta de manutenção")
+        with col_m2:
+            meta_manu_por_tec = st.number_input("Meta por técnico/dia (manutenção)", min_value=0.0, value=4.0, step=0.5,
+                                                 help="Ex: 4 para solo, 6 para equipe")
+        goal_manu = n_tec_manu * meta_manu_por_tec
+        if goal_manu > 0:
+            st.markdown(f"**Meta diária calculada: {goal_manu:.0f} manutenções/dia** "
+                        f"({n_tec_manu} técnicos × {meta_manu_por_tec:.1f}/dia) → "
+                        f"**{goal_manu * total_uteis_adm:.0f} no mês**")
+        else:
+            st.markdown("_Sem meta de manutenção configurada para este mês._")
 
         st.markdown("---")
         if st.button("Salvar metas", type="primary"):
@@ -1105,7 +1137,7 @@ def page_admin():
                                 goal_ativ_day=excluded.goal_ativ_day,
                                 goal_manu_day=excluded.goal_manu_day""",
                          (u.company_id, int(year), int(month), float(goal), float(goal_ativ), float(goal_manu)))
-            conn.commit(); st.success("Metas salvas com sucesso!")
+            conn.commit(); st.success(f"Metas salvas! Meta ativ/dia: {goal_ativ:.0f} | Meta manu/dia: {goal_manu:.0f}")
 
     with tabs[5]:
         st.subheader("Usuários e permissões")

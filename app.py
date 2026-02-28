@@ -563,6 +563,15 @@ def page_monthly_summary():
 # ==============================
 # INDICADORES DOS TÉCNICOS
 # ==============================
+def _semaforo(media, meta_media, limiar_pct=0.833):
+    """Retorna (cor_css, emoji, status) baseado na média vs meta."""
+    if media >= meta_media:
+        return "kpi-green",  "🟢", "No alvo"
+    elif media >= meta_media * limiar_pct:
+        return "kpi-orange", "🟠", "Atenção"
+    else:
+        return "kpi-red",    "🔴", "Abaixo"
+
 def page_technician_kpis():
     require_login()
     u     = get_user()
@@ -593,7 +602,7 @@ def page_technician_kpis():
         st.info("Sem dados para este mês.")
         return
 
-    # Calcular desempenho com meta dinâmica: Solo=3, Equipe=4
+    # ── Calcular desempenho por técnico ──────────────────────────────
     perf_data = []
     for _, row in df.iterrows():
         tech_name = row["Tecnico"]
@@ -611,56 +620,65 @@ def page_technician_kpis():
         dias_equipe = sum(1 for d in dias_rows if d["is_solo"] == 0)
         total_dias  = dias_solo + dias_equipe
 
-        # Meta acumulada: dias_solo*3 + dias_equipe*4
-        meta_total  = (dias_solo * 3) + (dias_equipe * 4)
-        ativ_total  = float(row["AtivacoesTotais"])
-        media_dia   = ativ_total / total_dias if total_dias > 0 else 0.0
-        meta_media  = meta_total / total_dias if total_dias > 0 else 3.0
-        pct_meta    = (ativ_total / meta_total * 100) if meta_total > 0 else 0
+        # ── Ativação: Solo=3, Equipe=4 ──
+        meta_ativ_total = (dias_solo * 3) + (dias_equipe * 4)
+        ativ_total      = float(row["AtivacoesTotais"])
+        media_ativ      = ativ_total / total_dias       if total_dias > 0 else 0.0
+        meta_ativ_media = meta_ativ_total / total_dias  if total_dias > 0 else 3.0
+        pct_ativ        = (ativ_total / meta_ativ_total * 100) if meta_ativ_total > 0 else 0
+        cor_a, sem_a, st_a = _semaforo(media_ativ, meta_ativ_media)
 
-        # Semáforo
-        if media_dia >= meta_media:
-            cor_css, semaforo, status = "kpi-green",  "🟢", "No alvo"
-        elif media_dia >= (meta_media * 2.5 / 3):
-            cor_css, semaforo, status = "kpi-orange", "🟠", "Atenção"
-        else:
-            cor_css, semaforo, status = "kpi-red",    "🔴", "Abaixo"
+        # ── Manutenção: Solo=4, Equipe=6 ──
+        meta_manu_total = (dias_solo * 4) + (dias_equipe * 6)
+        manu_total      = float(row["ManutencoesTotais"])
+        media_manu      = manu_total / total_dias       if total_dias > 0 else 0.0
+        meta_manu_media = meta_manu_total / total_dias  if total_dias > 0 else 4.0
+        pct_manu        = (manu_total / meta_manu_total * 100) if meta_manu_total > 0 else 0
+        cor_m, sem_m, st_m = _semaforo(media_manu, meta_manu_media)
 
         perf_data.append({
-            "Tecnico":           tech_name,
-            "MediaDia":          media_dia,
-            "MetaMedia":         meta_media,
-            "AtivacoesTotais":   ativ_total,
-            "ManutencoesTotais": float(row["ManutencoesTotais"]),
-            "ReceitaGerada":     float(row["ReceitaGerada"]),
-            "DiasTrabalh":       total_dias,
-            "DiasSolo":          dias_solo,
-            "DiasEquipe":        dias_equipe,
-            "PctMeta":           pct_meta,
-            "CorCSS":            cor_css,
-            "Semaforo":          semaforo,
-            "Status":            status,
+            "Tecnico":          tech_name,
+            "DiasSolo":         dias_solo,
+            "DiasEquipe":       dias_equipe,
+            "DiasTrabalh":      total_dias,
+            "ReceitaGerada":    float(row["ReceitaGerada"]),
+            # ativação
+            "AtivTotal":        ativ_total,
+            "MediaAtiv":        media_ativ,
+            "MetaAtivMedia":    meta_ativ_media,
+            "PctAtiv":          pct_ativ,
+            "CorAtiv":          cor_a,
+            "SemAtiv":          sem_a,
+            "StAtiv":           st_a,
+            # manutenção
+            "ManuTotal":        manu_total,
+            "MediaManu":        media_manu,
+            "MetaManuMedia":    meta_manu_media,
+            "PctManu":          pct_manu,
+            "CorManu":          cor_m,
+            "SemManu":          sem_m,
+            "StManu":           st_m,
         })
 
-    # ---- Cards semáforo ----
-    st.subheader("🚦 Desempenho por Técnico")
-    st.caption("Meta: Solo = 3 ativações/dia  |  Equipe = 4 ativações/dia")
+    # ── Cards: Ativação ──────────────────────────────────────────────
+    st.subheader("🚦 Ativação — Desempenho por Técnico")
+    st.caption("Meta Ativação: Solo = 3/dia  |  Equipe = 4/dia")
 
     n_cols = min(len(perf_data), 3)
     cols   = st.columns(n_cols)
     for i, p in enumerate(perf_data):
         with cols[i % n_cols]:
             st.markdown(f"""
-            <div class="{p['CorCSS']}">
-                <div class="kpi-name">{p['Semaforo']} {p['Tecnico']}</div>
-                <div class="kpi-avg">{p['MediaDia']:.2f}
+            <div class="{p['CorAtiv']}">
+                <div class="kpi-name">{p['SemAtiv']} {p['Tecnico']}</div>
+                <div class="kpi-avg">{p['MediaAtiv']:.2f}
                     <span style="font-size:1rem;color:#ccc;"> ativ/dia</span>
                 </div>
                 <div class="kpi-detail">
-                    Meta: {p['MetaMedia']:.1f}/dia &nbsp;|&nbsp; Status: <b>{p['Status']}</b><br>
-                    Total ativ: {p['AtivacoesTotais']:.0f} &nbsp;|&nbsp;
+                    Meta: {p['MetaAtivMedia']:.1f}/dia &nbsp;|&nbsp; Status: <b>{p['StAtiv']}</b><br>
+                    Total ativ: {p['AtivTotal']:.0f} &nbsp;|&nbsp;
                     Dias: {p['DiasTrabalh']} ({p['DiasSolo']} solo + {p['DiasEquipe']} eq)<br>
-                    Meta cumprida: {p['PctMeta']:.0f}% &nbsp;|&nbsp;
+                    Meta cumprida: {p['PctAtiv']:.0f}% &nbsp;|&nbsp;
                     Receita: R$ {p['ReceitaGerada']:,.0f}
                 </div>
             </div>
@@ -668,89 +686,130 @@ def page_technician_kpis():
 
     st.divider()
 
-    # ---- Gráfico de barras (Chart.js via HTML) ----
-    st.subheader("📊 Comparativo — Média de Ativações/Dia")
+    # ── Cards: Manutenção ────────────────────────────────────────────
+    st.subheader("🔧 Manutenção — Desempenho por Técnico")
+    st.caption("Meta Manutenção: Solo = 4/dia  |  Equipe = 6/dia")
 
-    import json
-    nomes     = [p["Tecnico"]            for p in perf_data]
-    medias    = [round(p["MediaDia"], 2) for p in perf_data]
-    metas     = [round(p["MetaMedia"], 2) for p in perf_data]
-    cores_hex = []
-    for p in perf_data:
-        if p["CorCSS"] == "kpi-green":   cores_hex.append("#2ecc71")
-        elif p["CorCSS"] == "kpi-orange": cores_hex.append("#f39c12")
-        else:                             cores_hex.append("#e74c3c")
-
-    chart_html = f"""
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <div style="background:#1a1a2e;border-radius:16px;padding:20px;">
-      <canvas id="kpiChart" height="110"></canvas>
-    </div>
-    <script>
-    new Chart(document.getElementById('kpiChart').getContext('2d'), {{
-      type: 'bar',
-      data: {{
-        labels: {json.dumps(nomes)},
-        datasets: [
-          {{
-            label: 'Média Ativ/Dia',
-            data: {json.dumps(medias)},
-            backgroundColor: {json.dumps(cores_hex)},
-            borderColor: {json.dumps(cores_hex)},
-            borderWidth: 2,
-            borderRadius: 8,
-          }},
-          {{
-            label: 'Meta/Dia',
-            data: {json.dumps(metas)},
-            type: 'line',
-            borderColor: '#FFC107',
-            backgroundColor: 'rgba(255,193,7,0.12)',
-            borderWidth: 2,
-            borderDash: [6,3],
-            pointBackgroundColor: '#FFC107',
-            pointRadius: 5,
-            fill: false,
-            tension: 0.3,
-          }}
-        ]
-      }},
-      options: {{
-        responsive: true,
-        plugins: {{
-          legend: {{ labels: {{ color: '#ffffff', font: {{ size: 13 }} }} }},
-          tooltip: {{
-            callbacks: {{
-              label: function(ctx) {{
-                return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2);
-              }}
-            }}
-          }}
-        }},
-        scales: {{
-          x: {{ ticks: {{ color: '#cccccc', font: {{ size: 13 }} }}, grid: {{ color: 'rgba(255,255,255,0.05)' }} }},
-          y: {{ beginAtZero: true, ticks: {{ color: '#cccccc', font: {{ size: 13 }} }}, grid: {{ color: 'rgba(255,255,255,0.08)' }} }}
-        }}
-      }}
-    }});
-    </script>
-    """
-    st.components.v1.html(chart_html, height=360)
+    cols2 = st.columns(n_cols)
+    for i, p in enumerate(perf_data):
+        with cols2[i % n_cols]:
+            st.markdown(f"""
+            <div class="{p['CorManu']}">
+                <div class="kpi-name">{p['SemManu']} {p['Tecnico']}</div>
+                <div class="kpi-avg">{p['MediaManu']:.2f}
+                    <span style="font-size:1rem;color:#ccc;"> manu/dia</span>
+                </div>
+                <div class="kpi-detail">
+                    Meta: {p['MetaManuMedia']:.1f}/dia &nbsp;|&nbsp; Status: <b>{p['StManu']}</b><br>
+                    Total manu: {p['ManuTotal']:.0f} &nbsp;|&nbsp;
+                    Dias: {p['DiasTrabalh']} ({p['DiasSolo']} solo + {p['DiasEquipe']} eq)<br>
+                    Meta cumprida: {p['PctManu']:.0f}%
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ---- Tabela detalhada ----
+    # ── Gráficos lado a lado ─────────────────────────────────────────
+    st.subheader("📊 Comparativo Gráfico")
+
+    import json
+    nomes       = [p["Tecnico"] for p in perf_data]
+    medias_ativ = [round(p["MediaAtiv"], 2)     for p in perf_data]
+    metas_ativ  = [round(p["MetaAtivMedia"], 2) for p in perf_data]
+    medias_manu = [round(p["MediaManu"], 2)     for p in perf_data]
+    metas_manu  = [round(p["MetaManuMedia"], 2) for p in perf_data]
+
+    def hex_cor(p, key):
+        c = p[key]
+        if c == "kpi-green":  return "#2ecc71"
+        if c == "kpi-orange": return "#f39c12"
+        return "#e74c3c"
+
+    cores_ativ = [hex_cor(p, "CorAtiv") for p in perf_data]
+    cores_manu = [hex_cor(p, "CorManu") for p in perf_data]
+
+    chart_html = f"""
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <div style="display:flex;gap:16px;background:#0f0f0f;padding:8px;">
+
+      <div style="flex:1;background:#1a1a2e;border-radius:16px;padding:20px;">
+        <p style="color:#fff;font-weight:600;margin-bottom:12px;">⚡ Ativação</p>
+        <canvas id="chartAtiv" height="140"></canvas>
+      </div>
+
+      <div style="flex:1;background:#1a1a2e;border-radius:16px;padding:20px;">
+        <p style="color:#fff;font-weight:600;margin-bottom:12px;">🔧 Manutenção</p>
+        <canvas id="chartManu" height="140"></canvas>
+      </div>
+
+    </div>
+    <script>
+    const optBase = (metaLabel) => ({{
+      responsive: true,
+      plugins: {{
+        legend: {{ labels: {{ color:'#fff', font:{{ size:12 }} }} }},
+        tooltip: {{ callbacks: {{ label: ctx => ctx.dataset.label+': '+ctx.parsed.y.toFixed(2) }} }}
+      }},
+      scales: {{
+        x: {{ ticks:{{ color:'#ccc', font:{{ size:12 }} }}, grid:{{ color:'rgba(255,255,255,0.05)' }} }},
+        y: {{ beginAtZero:true, ticks:{{ color:'#ccc', font:{{ size:12 }} }}, grid:{{ color:'rgba(255,255,255,0.08)' }} }}
+      }}
+    }});
+
+    new Chart(document.getElementById('chartAtiv').getContext('2d'), {{
+      type:'bar',
+      data:{{
+        labels:{json.dumps(nomes)},
+        datasets:[
+          {{ label:'Média Ativ/Dia', data:{json.dumps(medias_ativ)},
+             backgroundColor:{json.dumps(cores_ativ)}, borderColor:{json.dumps(cores_ativ)},
+             borderWidth:2, borderRadius:8 }},
+          {{ label:'Meta/Dia', data:{json.dumps(metas_ativ)}, type:'line',
+             borderColor:'#FFC107', backgroundColor:'rgba(255,193,7,0.12)',
+             borderWidth:2, borderDash:[6,3], pointBackgroundColor:'#FFC107',
+             pointRadius:5, fill:false, tension:0.3 }}
+        ]
+      }},
+      options: optBase('Meta Ativ')
+    }});
+
+    new Chart(document.getElementById('chartManu').getContext('2d'), {{
+      type:'bar',
+      data:{{
+        labels:{json.dumps(nomes)},
+        datasets:[
+          {{ label:'Média Manu/Dia', data:{json.dumps(medias_manu)},
+             backgroundColor:{json.dumps(cores_manu)}, borderColor:{json.dumps(cores_manu)},
+             borderWidth:2, borderRadius:8 }},
+          {{ label:'Meta/Dia', data:{json.dumps(metas_manu)}, type:'line',
+             borderColor:'#FFC107', backgroundColor:'rgba(255,193,7,0.12)',
+             borderWidth:2, borderDash:[6,3], pointBackgroundColor:'#FFC107',
+             pointRadius:5, fill:false, tension:0.3 }}
+        ]
+      }},
+      options: optBase('Meta Manu')
+    }});
+    </script>
+    """
+    st.components.v1.html(chart_html, height=420)
+
+    st.divider()
+
+    # ── Tabela detalhada ─────────────────────────────────────────────
     st.subheader("📋 Tabela Detalhada")
     df_show = pd.DataFrame([{
-        "Técnico":           p["Tecnico"],
-        "Status":            p["Semaforo"] + " " + p["Status"],
-        "Média Ativ/Dia":    round(p["MediaDia"], 2),
-        "Meta/Dia":          round(p["MetaMedia"], 1),
-        "% Meta":            f"{p['PctMeta']:.0f}%",
-        "Total Ativações":   int(p["AtivacoesTotais"]),
-        "Total Manutenções": int(p["ManutencoesTotais"]),
-        "Dias Trabalhados":  p["DiasTrabalh"],
-        "Receita (R$)":      round(p["ReceitaGerada"], 2),
+        "Técnico":              p["Tecnico"],
+        "Status Ativ":          p["SemAtiv"] + " " + p["StAtiv"],
+        "Média Ativ/Dia":       round(p["MediaAtiv"], 2),
+        "Meta Ativ/Dia":        round(p["MetaAtivMedia"], 1),
+        "% Meta Ativ":          f"{p['PctAtiv']:.0f}%",
+        "Status Manu":          p["SemManu"] + " " + p["StManu"],
+        "Média Manu/Dia":       round(p["MediaManu"], 2),
+        "Meta Manu/Dia":        round(p["MetaManuMedia"], 1),
+        "% Meta Manu":          f"{p['PctManu']:.0f}%",
+        "Dias Trabalhados":     p["DiasTrabalh"],
+        "Receita (R$)":         round(p["ReceitaGerada"], 2),
     } for p in perf_data])
     st.dataframe(df_show, use_container_width=True, hide_index=True)
 

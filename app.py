@@ -684,10 +684,9 @@ def page_admin():
     u = get_user()
     require_role({"admin"})
     st.header("Admin")
-
-    tabs = st.tabs(["Técnicos", "Equipes", # ==============================
-# 🧩 EQUIPES — Ações (Editar/Excluir)
-# ==============================
+    
+tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
+  
         # Modo edição
         if st.session_state.edit_team_rid == rid:
             new_name = col1.text_input("Nome da equipe", value=name, key=f"edit_team_name_{rid}")

@@ -685,7 +685,92 @@ def page_admin():
     require_role({"admin"})
     st.header("Admin")
 
-    tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
+    tabs = st.tabs(["Técnicos", "Equipes", # ==============================
+# 🧩 EQUIPES — Ações (Editar/Excluir)
+# ==============================
+
+def db_fetch_teams_with_rowid(conn):
+    # rowid funciona mesmo que a tabela não tenha coluna id
+    cur = conn.cursor()
+    cur.execute("SELECT rowid as rid, name, is_active FROM teams ORDER BY name")
+    return cur.fetchall()
+
+def db_update_team_name(conn, rid: int, new_name: str):
+    cur = conn.cursor()
+    cur.execute("UPDATE teams SET name = ? WHERE rowid = ?", (new_name.strip(), rid))
+    conn.commit()
+
+def db_delete_team(conn, rid: int):
+    cur = conn.cursor()
+    cur.execute("DELETE FROM teams WHERE rowid = ?", (rid,))
+    conn.commit()
+
+# Lista de equipes com ações
+teams_rows = db_fetch_teams_with_rowid(conn)
+
+st.markdown("### Equipes cadastradas")
+
+if not teams_rows:
+    st.info("Nenhuma equipe cadastrada ainda.")
+else:
+    # Cabeçalho
+    c1, c2, c3, c4 = st.columns([4, 2, 2, 2])
+    c1.markdown("**Equipe**")
+    c2.markdown("**Ativa?**")
+    c3.markdown("**Editar**")
+    c4.markdown("**Excluir**")
+
+    # Estados de confirmação
+    if "confirm_delete_team" not in st.session_state:
+        st.session_state.confirm_delete_team = None
+    if "edit_team_rid" not in st.session_state:
+        st.session_state.edit_team_rid = None
+
+    for rid, name, is_active in teams_rows:
+        col1, col2, col3, col4 = st.columns([4, 2, 2, 2])
+
+        # Modo edição
+        if st.session_state.edit_team_rid == rid:
+            new_name = col1.text_input("Nome da equipe", value=name, key=f"edit_team_name_{rid}")
+            col2.write("✅" if is_active else "❌")
+
+            if col3.button("Salvar", key=f"save_team_{rid}"):
+                if new_name.strip():
+                    db_update_team_name(conn, rid, new_name)
+                    st.session_state.edit_team_rid = None
+                    st.success("Equipe atualizada!")
+                    st.rerun()
+                else:
+                    st.warning("O nome não pode ficar vazio.")
+
+            if col4.button("Cancelar", key=f"cancel_edit_team_{rid}"):
+                st.session_state.edit_team_rid = None
+                st.rerun()
+
+        else:
+            col1.write(name)
+            col2.write("✅" if is_active else "❌")
+
+            if col3.button("Editar", key=f"btn_edit_team_{rid}"):
+                st.session_state.edit_team_rid = rid
+                st.rerun()
+
+            # Excluir com confirmação em 2 cliques
+            if st.session_state.confirm_delete_team == rid:
+                col4.warning("Confirmar?")
+                cc1, cc2 = col4.columns(2)
+                if cc1.button("Sim", key=f"confirm_del_team_{rid}"):
+                    db_delete_team(conn, rid)
+                    st.session_state.confirm_delete_team = None
+                    st.success("Equipe excluída!")
+                    st.rerun()
+                if cc2.button("Não", key=f"cancel_del_team_{rid}"):
+                    st.session_state.confirm_delete_team = None
+                    st.rerun()
+            else:
+                if col4.button("Excluir", key=f"btn_delete_team_{rid}"):
+                    st.session_state.confirm_delete_team = rid
+                    st.rerun()"Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
     with tabs[0]:
         admin_table_editor("Técnicos", "technicians", u.company_id, "tech")
     with tabs[1]:

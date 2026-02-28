@@ -658,11 +658,17 @@ def page_technician_kpis():
 def admin_table_editor(title, table, company_id, key_prefix):
     st.subheader(title)
     conn = get_conn()
-    rows = fetch_all(conn, f"SELECT id, name, is_active FROM {table} WHERE company_id=? ORDER BY id DESC", (company_id,))
-    df = df_from_rows(rows)
-    if not df.empty:
-        st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
 
+    # Lista registros
+    rows = fetch_all(conn, f"""
+        SELECT id, name, is_active
+        FROM {table}
+        WHERE company_id=?
+        ORDER BY id DESC
+    """, (company_id,))
+    df = df_from_rows(rows)
+
+    # Form adicionar
     with st.form(f"{key_prefix}_add"):
         st.markdown("**Adicionar novo**")
         name = st.text_input("Nome", key=f"{key_prefix}_name")
@@ -672,13 +678,62 @@ def admin_table_editor(title, table, company_id, key_prefix):
                 st.error("Informe um nome.")
             else:
                 try:
-                    conn.execute(f"INSERT INTO {table}(company_id, name, is_active) VALUES (?,?,1)", (company_id, name.strip()))
+                    conn.execute(
+                        f"INSERT INTO {table}(company_id, name, is_active) VALUES (?,?,1)",
+                        (company_id, name.strip())
+                    )
                     conn.commit()
                     st.success("Adicionado.")
                     st.rerun()
                 except sqlite3.IntegrityError:
                     st.error("Já existe um registro com esse nome.")
 
+    st.divider()
+
+    # Ações
+    if df.empty:
+        st.info("Nenhum registro cadastrado ainda.")
+        return
+
+    st.markdown("**Registros**")
+    for row in rows:
+        rid = int(row["id"])
+        name = row["name"]
+        is_active = int(row["is_active"]) == 1
+
+        c1, c2, c3, c4 = st.columns([6, 2, 2, 2])
+        c1.write(name)
+        c2.write("✅ Ativo" if is_active else "⛔ Inativo")
+
+        # Ativar/Desativar
+        if c3.button("Desativar" if is_active else "Ativar", key=f"{key_prefix}_toggle_{rid}"):
+            conn.execute(
+                f"UPDATE {table} SET is_active=? WHERE company_id=? AND id=?",
+                (0 if is_active else 1, company_id, rid)
+            )
+            conn.commit()
+            st.rerun()
+
+        # Excluir (simples)
+        if c4.button("Excluir", key=f"{key_prefix}_del_{rid}"):
+            st.session_state[f"{key_prefix}_confirm_del"] = rid
+
+        # Confirmação
+        if st.session_state.get(f"{key_prefix}_confirm_del") == rid:
+            st.warning(f"Confirmar exclusão de: **{name}** ?")
+            cc1, cc2 = st.columns(2)
+            if cc1.button("✅ Confirmar", key=f"{key_prefix}_confirm_yes_{rid}"):
+                conn.execute(
+                    f"DELETE FROM {table} WHERE company_id=? AND id=?",
+                    (company_id, rid)
+                )
+                conn.commit()
+                st.session_state[f"{key_prefix}_confirm_del"] = None
+                st.success("Excluído.")
+                st.rerun()
+            if cc2.button("Cancelar", key=f"{key_prefix}_confirm_no_{rid}"):
+                st.session_state[f"{key_prefix}_confirm_del"] = None
+                st.rerun()
 def page_admin():
     require_login()
     u = get_user()

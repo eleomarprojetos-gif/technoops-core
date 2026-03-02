@@ -8,102 +8,74 @@ import pandas as pd
 import streamlit as st
 
 # ==============================
-# CONFIG DA PÁGINA
-# ==============================
-st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide")
-
-# ==============================
-# 🎨 ESTILO GLOBAL (FORÇA SEMPRE DARK)
+# 🎨 ESTILO GLOBAL — tema escuro forçado
 # ==============================
 st.markdown("""
 <style>
-/* Força o navegador/Streamlit a tratar tudo como DARK */
-:root { color-scheme: dark !important; }
-html, body, [data-testid="stAppViewContainer"], .stApp {
-  background: #0F0F0F !important;
-  color: #FFFFFF !important;
+/* Forçar tema escuro independente do navegador */
+:root, [data-theme="light"], [data-theme="dark"] {
+    color-scheme: dark !important;
 }
-
-/* Header */
-header[data-testid="stHeader"] { background-color: #A64D9A !important; }
-
-/* Sidebar */
-div[data-testid="stSidebar"] {
-  background: linear-gradient(180deg, rgba(126,45,127,0.85), rgba(15,15,15,1)) !important;
+html, body, [class*="css"], .stApp, .main, section[data-testid="stSidebar"] * {
+    background-color: #0F0F0F !important;
+    color: #FFFFFF !important;
 }
-div[data-testid="stSidebar"] * { color: #FFFFFF !important; }
-
-/* Inputs e selects (escuro + borda amarela) */
-.stTextInput input,
-textarea,
-input[type="number"], input[type="date"]{
-  border: 2px solid #FFC107 !important;
-  color: white !important;
-  background-color: #1E1E1E !important;
-  font-size: 16px !important;
-}
-.stTextInput input::placeholder,
-textarea::placeholder { color: #CCCCCC !important; }
-
 div[data-baseweb="select"] > div {
-  border: 2px solid #FFC107 !important;
-  border-radius: 6px !important;
-  background-color: #1E1E2F !important;
-  color: white !important;
-  font-size: 16px !important;
+    border: 2px solid #FFC107 !important;
+    border-radius: 6px !important;
+    background-color: #1E1E2F !important;
+    color: white !important;
+    font-size: 16px !important;
 }
 div[data-baseweb="select"] span { color: white !important; font-size: 16px !important; }
+div[data-baseweb="popover"] { background-color: #1E1E2F !important; }
+div[data-baseweb="menu"] { background-color: #1E1E2F !important; }
+li[role="option"] { background-color: #1E1E2F !important; color: white !important; }
+li[role="option"]:hover { background-color: #2e2e4f !important; }
 
-/* Labels */
+input[type="number"], input[type="date"] {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 16px !important;
+    background-color: #1E1E1E !important;
+}
+header[data-testid="stHeader"] { background-color: #A64D9A !important; }
+.stTextInput input {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 16px !important;
+    background-color: #1E1E1E !important;
+}
+.stTextInput input[type="password"] { color: white !important; }
+.stTextInput input::placeholder { color: #CCCCCC !important; }
+textarea {
+    border: 2px solid #FFC107 !important;
+    color: white !important;
+    font-size: 15px !important;
+    background-color: #1E1E1E !important;
+}
+textarea::placeholder { color: #CCCCCC !important; }
 label { color: white !important; font-size: 16px !important; }
+.stButton>button { background-color: #A64D9A; color: white; font-size: 16px; border-radius: 6px; }
+.stSelectbox div { color: white !important; font-size: 16px !important; }
+p, span, div, h1, h2, h3, h4 { color: white !important; }
+.stDataFrame { background-color: #1E1E1E !important; }
+[data-testid="stNumberInput"] input { background-color: #1E1E1E !important; color: white !important; }
 
-/* Botões */
-.stButton>button {
-  background-color: #A64D9A !important;
-  color: white !important;
-  font-size: 16px !important;
-  border-radius: 6px !important;
-}
-
-/* Cards padrão */
-.techno-card {
-  background: #151515;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 16px 18px;
-}
-.techno-kpi  { font-size: 1.1rem; color: #CFCFCF; margin-bottom: 6px; }
-.techno-value{ font-size: 1.7rem; font-weight: 700; color: #FFFFFF; }
-.techno-pill {
-  display: inline-block; padding: 2px 10px; border-radius: 999px;
-  background: rgba(242,178,51,0.18); border: 1px solid rgba(242,178,51,0.35);
-  color: #FFFFFF; font-size: 0.85rem;
-}
-
-/* Cards semáforo (indicadores) */
-.kpi-green {
-  background: linear-gradient(135deg, #0d3320, #1a5c38);
-  border: 1px solid #2ecc71;
-  border-radius: 14px; padding: 16px 18px; margin-bottom: 8px;
-}
-.kpi-orange {
-  background: linear-gradient(135deg, #3d2400, #6b4000);
-  border: 1px solid #f39c12;
-  border-radius: 14px; padding: 16px 18px; margin-bottom: 8px;
-}
-.kpi-red {
-  background: linear-gradient(135deg, #3d0000, #6b0000);
-  border: 1px solid #e74c3c;
-  border-radius: 14px; padding: 16px 18px; margin-bottom: 8px;
-}
+/* Cards semáforo */
+.kpi-green  { background: linear-gradient(135deg,#0d3320,#1a5c38); border:1px solid #2ecc71; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
+.kpi-orange { background: linear-gradient(135deg,#3d2400,#6b4000); border:1px solid #f39c12; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
+.kpi-red    { background: linear-gradient(135deg,#3d0000,#6b0000); border:1px solid #e74c3c; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
+.kpi-name   { font-size:1rem;  color:#CFCFCF; margin-bottom:4px; }
+.kpi-avg    { font-size:1.6rem; font-weight:700; color:#FFFFFF; }
+.kpi-detail { font-size:0.82rem; color:#CFCFCF; margin-top:4px; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
 # CONFIG
 # ==============================
-DB_PATH   = os.path.join(os.path.dirname(__file__), "technoops.db")
-
+DB_PATH   = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "technoops.db"))
 PRIMARY   = "#7E2D7F"
 SECONDARY = "#F2B233"
 BG        = "#0F0F0F"
@@ -121,21 +93,14 @@ def _pbkdf2_hash(password: str, salt_hex: str) -> str:
 def verify_password(stored: str, password: str) -> bool:
     try:
         algo, salt, digest = stored.split("$", 2)
-        if algo != "pbkdf2_sha256":
-            return False
+        if algo != "pbkdf2_sha256": return False
         return _pbkdf2_hash(password, salt) == digest
     except Exception:
         return False
 
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
-    digest = _pbkdf2_hash(password, salt)
-    return f"pbkdf2_sha256${salt}${digest}"
-
-def get_conn():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return f"pbkdf2_sha256${salt}${_pbkdf2_hash(password, salt)}"
 
 def update_user_password(company_id: int, username: str, new_password: str):
     conn = get_conn()
@@ -146,6 +111,11 @@ def update_user_password(company_id: int, username: str, new_password: str):
 # ==============================
 # BANCO DE DADOS
 # ==============================
+def get_conn():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
     conn = get_conn()
     cur  = conn.cursor()
@@ -156,7 +126,7 @@ def init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL, username TEXT NOT NULL, password_hash TEXT NOT NULL,
-        role TEXT NOT NULL CHECK(role IN ('admin','operator','viewer')),
+        role TEXT NOT NULL CHECK(role IN ('admin','operator','viewer','technician')),
         is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL,
         UNIQUE(company_id, username), FOREIGN KEY(company_id) REFERENCES companies(id));""")
     cur.execute("""CREATE TABLE IF NOT EXISTS technicians (
@@ -184,13 +154,12 @@ def init_db():
         goal_ativ_day REAL NOT NULL DEFAULT 0,
         goal_manu_day REAL NOT NULL DEFAULT 0,
         UNIQUE(company_id, year, month), FOREIGN KEY(company_id) REFERENCES companies(id));""")
-
     for col, default in [("goal_ativ_day", 0), ("goal_manu_day", 0)]:
-        try:
-            cur.execute(f"ALTER TABLE monthly_goals ADD COLUMN {col} REAL NOT NULL DEFAULT {default}")
-        except Exception:
-            pass
-
+        try: cur.execute(f"ALTER TABLE monthly_goals ADD COLUMN {col} REAL NOT NULL DEFAULT {default}")
+        except: pass
+    # Migração: suporte ao role technician
+    try: cur.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'viewer'")
+    except: pass
     cur.execute("""CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL, entry_date TEXT NOT NULL,
@@ -203,7 +172,6 @@ def init_db():
         FOREIGN KEY(region_id) REFERENCES regions(id),
         FOREIGN KEY(service_type_id) REFERENCES service_types(id));""")
     conn.commit()
-
     cur.execute("SELECT COUNT(*) AS n FROM companies;")
     if cur.fetchone()["n"] == 0:
         now = dt.datetime.utcnow().isoformat()
@@ -220,6 +188,28 @@ def init_db():
     conn.close()
 
 # ==============================
+# CSS INJECT
+# ==============================
+def inject_css():
+    st.markdown(f"""
+    <style>
+      .stApp {{ background:{BG} !important; color:{TEXT}; }}
+      .block-container {{ padding-top:2rem; background:{BG} !important; }}
+      .techno-card {{ background:{CARD}; border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px 18px; }}
+      .techno-kpi   {{ font-size:1.1rem; color:{MUTED}; margin-bottom:6px; }}
+      .techno-value {{ font-size:1.7rem; font-weight:700; color:{TEXT}; }}
+      .techno-pill  {{ display:inline-block; padding:2px 10px; border-radius:999px;
+                       background:rgba(242,178,51,0.18); border:1px solid rgba(242,178,51,0.35);
+                       color:{TEXT}; font-size:0.85rem; }}
+      div[data-testid="stSidebar"] {{
+        background:linear-gradient(180deg,rgba(126,45,127,0.85),rgba(15,15,15,1)) !important;
+      }}
+      button[kind="primary"]   {{ background:{SECONDARY} !important; color:#111 !important; border:0 !important; }}
+      button[kind="secondary"] {{ border:1px solid rgba(255,255,255,0.18) !important; color:{TEXT} !important; }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# ==============================
 # SESSION
 # ==============================
 @dataclass
@@ -233,21 +223,26 @@ def set_user(user): st.session_state["user"] = user
 def get_user():     return st.session_state.get("user")
 
 def require_login():
-    if not get_user():
-        st.warning("Faça login para continuar.")
-        st.stop()
+    if not get_user(): st.warning("Faça login para continuar."); st.stop()
 
 def require_role(roles):
     u = get_user()
-    if not u or u.role not in roles:
-        st.error("Você não tem permissão para acessar esta área.")
-        st.stop()
+    if not u or u.role not in roles: st.error("Acesso não permitido."); st.stop()
 
-def fetch_all(conn, sql, params=()):  return conn.execute(sql, params).fetchall()
-def fetch_one(conn, sql, params=()):  return conn.execute(sql, params).fetchone()
+def fetch_all(conn, sql, params=()): return conn.execute(sql, params).fetchall()
+def fetch_one(conn, sql, params=()): return conn.execute(sql, params).fetchone()
 def df_from_rows(rows):
     if not rows: return pd.DataFrame()
     return pd.DataFrame([dict(r) for r in rows])
+
+# ==============================
+# HELPER — dias úteis seg-sáb
+# ==============================
+def dias_uteis_mes(year: int, month: int) -> list:
+    import calendar
+    _, n = calendar.monthrange(year, month)
+    return [dt.date(year, month, d) for d in range(1, n+1)
+            if dt.date(year, month, d).weekday() < 6]
 
 # ==============================
 # LOGIN
@@ -263,27 +258,22 @@ def page_login():
             st.image(logo_path, use_container_width=True)
     with col2:
         with st.form("login_form"):
-            company  = st.text_input("Empresa", value="Techno Mais")
-            username = st.text_input("Usuário")
-            password = st.text_input("Senha", type="password")
+            company   = st.text_input("Empresa", value="Techno Mais")
+            username  = st.text_input("Usuário")
+            password  = st.text_input("Senha", type="password")
             submitted = st.form_submit_button("Entrar", use_container_width=True)
         if submitted:
             conn = get_conn()
             comp = fetch_one(conn, "SELECT * FROM companies WHERE name=?", (company.strip(),))
-            if not comp:
-                st.error("Empresa não encontrada.")
-                return
+            if not comp: st.error("Empresa não encontrada."); return
             user = fetch_one(conn, "SELECT * FROM users WHERE company_id=? AND username=? AND is_active=1",
                              (comp["id"], username.strip()))
             if not user or not verify_password(user["password_hash"], password):
-                st.error("Usuário ou senha inválidos.")
-                return
+                st.error("Usuário ou senha inválidos."); return
             set_user(SessionUser(company_id=comp["id"], company_name=comp["name"],
                                  username=user["username"], role=user["role"]))
             st.success("Login realizado!")
             st.rerun()
-        st.divider()
-        # REMOVIDO: texto com credenciais do primeiro acesso (você pediu para apagar)
 
 # ==============================
 # SIDEBAR
@@ -296,21 +286,11 @@ def sidebar_header():
         st.sidebar.image(sub_path, use_container_width=True)
     st.sidebar.write(f"**Empresa:** {u.company_name}")
     st.sidebar.write(f"**Usuário:** {u.username}")
-    role_map = {"admin": "Admin", "operator": "Operador", "viewer": "Visualização"}
+    role_map = {"admin": "Administração", "operator": "Operador", "viewer": "Visualização", "technician": "Técnico"}
     st.sidebar.markdown(f"<span class='techno-pill'>{role_map.get(u.role, u.role)}</span>", unsafe_allow_html=True)
     if st.sidebar.button("Sair"):
-        set_user(None)
-        st.rerun()
+        set_user(None); st.rerun()
     st.sidebar.divider()
-
-# ==============================
-# HELPER — dias úteis seg-sáb
-# ==============================
-def dias_uteis_mes(year: int, month: int) -> list:
-    import calendar
-    _, n = calendar.monthrange(year, month)
-    return [dt.date(year, month, d) for d in range(1, n + 1)
-            if dt.date(year, month, d).weekday() < 6]
 
 # ==============================
 # DASHBOARD
@@ -320,143 +300,207 @@ def page_dashboard():
     u     = get_user()
     today = dt.date.today()
     conn  = get_conn()
-    st.header("Dashboard")
+    st.header("Painel")
 
     ym = f"{today.year:04d}-{today.month:02d}"
 
-    rows_today = fetch_all(conn,
-        "SELECT quantity, unit_value FROM entries WHERE company_id=? AND entry_date=?",
-        (u.company_id, today.isoformat()))
+    rows_today = fetch_all(conn, "SELECT quantity, unit_value FROM entries WHERE company_id=? AND entry_date=?",
+                           (u.company_id, today.isoformat()))
     total_services = sum(r["quantity"] for r in rows_today) if rows_today else 0
     total_revenue  = sum(r["quantity"] * r["unit_value"] for r in rows_today) if rows_today else 0
 
-    m_rows     = fetch_all(conn,
-        "SELECT quantity, unit_value FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
-        (u.company_id, ym))
-    m_revenue  = sum(r["quantity"] * r["unit_value"] for r in m_rows) if m_rows else 0
+    m_rows    = fetch_all(conn, "SELECT quantity, unit_value FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
+                          (u.company_id, ym))
+    m_revenue = sum(r["quantity"] * r["unit_value"] for r in m_rows) if m_rows else 0
 
-    goal_row   = fetch_one(conn,
-        "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
-        (u.company_id, today.year, today.month))
-    goal_value     = float(goal_row["goal_value"])     if goal_row else 0.0
-    goal_ativ_day  = float(goal_row["goal_ativ_day"])  if goal_row else 0.0
-    goal_manu_day  = float(goal_row["goal_manu_day"])  if goal_row else 0.0
+    goal_row      = fetch_one(conn, "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
+                              (u.company_id, today.year, today.month))
+    goal_value    = float(goal_row["goal_value"])    if goal_row else 0.0
+    goal_ativ_day = float(goal_row["goal_ativ_day"]) if goal_row else 0.0
+    goal_manu_day = float(goal_row["goal_manu_day"]) if goal_row else 0.0
 
+    # ── KPI cards topo ────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Serviços hoje</div>"
-                    f"<div class='techno-value'>{total_services:.0f}</div></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita hoje</div>"
-                    f"<div class='techno-value'>R$ {total_revenue:,.2f}</div></div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita do mês</div>"
-                    f"<div class='techno-value'>R$ {m_revenue:,.2f}</div></div>", unsafe_allow_html=True)
+    with c1: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Serviços hoje</div><div class='techno-value'>{total_services:.0f}</div></div>", unsafe_allow_html=True)
+    with c2: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita hoje</div><div class='techno-value'>R$ {total_revenue:,.2f}</div></div>", unsafe_allow_html=True)
+    with c3: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita do mês</div><div class='techno-value'>R$ {m_revenue:,.2f}</div></div>", unsafe_allow_html=True)
     with c4:
         if goal_value > 0:
             pct = m_revenue / goal_value * 100
-            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>% Meta Faturamento</div>"
-                        f"<div class='techno-value'>{pct:.0f}%</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>% Meta Faturamento</div><div class='techno-value'>{pct:.0f}%</div></div>", unsafe_allow_html=True)
         else:
-            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Meta do mês</div>"
-                        f"<div class='techno-value'>—</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Meta do mês</div><div class='techno-value'>—</div></div>", unsafe_allow_html=True)
 
-    dias_uteis    = dias_uteis_mes(today.year, today.month)
-    total_uteis   = len(dias_uteis)
+    # ── Gauges ────────────────────────────────────────────────────────
+    dias_uteis           = dias_uteis_mes(today.year, today.month)
+    total_uteis          = len(dias_uteis)
     dias_restantes_uteis = sum(1 for d in dias_uteis if d > today)
 
-    dias_lancados_rows = fetch_all(conn,
-        "SELECT COUNT(DISTINCT entry_date) as n FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
-        (u.company_id, ym))
+    dias_lancados_rows = fetch_all(conn, "SELECT COUNT(DISTINCT entry_date) as n FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
+                                   (u.company_id, ym))
     dias_trabalhados = int(dias_lancados_rows[0]["n"]) if dias_lancados_rows else 0
 
+    # Gauge 1 — Faturamento
     if goal_value > 0 and total_uteis > 0:
         meta_dia_fat     = goal_value / total_uteis
         receita_esperada = meta_dia_fat * max(dias_trabalhados, 1)
         pct_fat          = min(m_revenue / receita_esperada * 100, 200) if receita_esperada > 0 else 0
         ritmo_atual      = m_revenue / dias_trabalhados if dias_trabalhados > 0 else 0
         projecao_fim     = m_revenue + ritmo_atual * dias_restantes_uteis
-
         if pct_fat >= 95:   cor_fat, status_fat = "#2ecc71", "No alvo 🟢"
         elif pct_fat >= 75: cor_fat, status_fat = "#f39c12", "Atenção 🟠"
         else:               cor_fat, status_fat = "#e74c3c", "Abaixo 🔴"
-
         label_fat = (f"R$ {m_revenue:,.0f} / R$ {receita_esperada:,.0f} esperado<br>"
                      f"Projeção fim do mês: R$ {projecao_fim:,.0f}<br>"
                      f"Dias trabalhados: {dias_trabalhados} | Meta/dia: R$ {meta_dia_fat:,.0f}")
     else:
         pct_fat, cor_fat, status_fat = 0, "#555", "Meta não configurada"
-        label_fat = "Configure a meta em Admin → Meta Mensal"
+        label_fat = "Configure a meta em Administração → Meta Mensal"
 
+    # Gauge 2 — Ativações
     if goal_ativ_day > 0:
-        ativ_rows  = fetch_all(conn, """
-            SELECT SUM(e.quantity) as total
-            FROM entries e JOIN service_types st ON st.id=e.service_type_id
-            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='ativacao'
-        """, (u.company_id, ym))
+        ativ_rows  = fetch_all(conn, """SELECT SUM(e.quantity) as total FROM entries e
+            JOIN service_types st ON st.id=e.service_type_id
+            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='ativacao'""", (u.company_id, ym))
         ativ_total = float(ativ_rows[0]["total"] or 0)
         media_ativ = ativ_total / dias_trabalhados if dias_trabalhados > 0 else 0
         pct_ativ   = min(media_ativ / goal_ativ_day * 100, 200)
-
         if pct_ativ >= 95:   cor_ativ, status_ativ = "#2ecc71", "No alvo 🟢"
         elif pct_ativ >= 75: cor_ativ, status_ativ = "#f39c12", "Atenção 🟠"
         else:                cor_ativ, status_ativ = "#e74c3c", "Abaixo 🔴"
-
         label_ativ = (f"Média atual: {media_ativ:.1f}/dia | Meta: {goal_ativ_day:.1f}/dia<br>"
                       f"Total acumulado: {ativ_total:.0f} ativações<br>"
                       f"Dias trabalhados: {dias_trabalhados} de {total_uteis} úteis")
     else:
         pct_ativ, cor_ativ, status_ativ = 0, "#555", "Meta não configurada"
-        label_ativ = "Configure a meta em Admin → Meta Mensal"
+        label_ativ = "Configure a meta em Administração → Meta Mensal"
 
+    # Gauge 3 — Manutenções
     if goal_manu_day > 0:
-        manu_rows  = fetch_all(conn, """
-            SELECT SUM(e.quantity) as total
-            FROM entries e JOIN service_types st ON st.id=e.service_type_id
-            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='manutencao'
-        """, (u.company_id, ym))
+        manu_rows  = fetch_all(conn, """SELECT SUM(e.quantity) as total FROM entries e
+            JOIN service_types st ON st.id=e.service_type_id
+            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND st.category='manutencao'""", (u.company_id, ym))
         manu_total = float(manu_rows[0]["total"] or 0)
         media_manu = manu_total / dias_trabalhados if dias_trabalhados > 0 else 0
         pct_manu   = min(media_manu / goal_manu_day * 100, 200)
-
         if pct_manu >= 95:   cor_manu, status_manu = "#2ecc71", "No alvo 🟢"
         elif pct_manu >= 75: cor_manu, status_manu = "#f39c12", "Atenção 🟠"
         else:                cor_manu, status_manu = "#e74c3c", "Abaixo 🔴"
-
         label_manu = (f"Média atual: {media_manu:.1f}/dia | Meta: {goal_manu_day:.1f}/dia<br>"
                       f"Total acumulado: {manu_total:.0f} manutenções<br>"
                       f"Dias trabalhados: {dias_trabalhados} de {total_uteis} úteis")
     else:
         pct_manu, cor_manu, status_manu = 0, "#555", "Meta não configurada"
-        label_manu = "Configure a meta em Admin → Meta Mensal"
+        label_manu = "Configure a meta em Administração → Meta Mensal"
 
     st.divider()
 
     def gauge_html(pct, cor, titulo, status, label):
         import math
         arco = min(max(pct, 0), 100)
-        r = 70
-        circ = math.pi * r
-        dash_val  = arco / 100 * circ
-        dash_rem  = circ - dash_val
+        circ = math.pi * 70
+        dash_val = arco / 100 * circ
+        dash_rem = circ - dash_val
         return f"""
         <div style="background:#1a1a2e;border-radius:18px;padding:20px 16px 12px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
             <div style="font-size:0.9rem;color:#ccc;margin-bottom:8px;font-weight:600;">{titulo}</div>
             <svg viewBox="0 0 180 100" width="200" height="115">
                 <path d="M 20 90 A 70 70 0 0 1 160 90" fill="none" stroke="#2a2a3e" stroke-width="16" stroke-linecap="round"/>
                 <path d="M 20 90 A 70 70 0 0 1 160 90" fill="none" stroke="{cor}" stroke-width="16" stroke-linecap="round"
-                      stroke-dasharray="{dash_val:.1f} {dash_rem:.1f}" style="transition:stroke-dasharray 0.6s ease;"/>
+                      stroke-dasharray="{dash_val:.1f} {dash_rem:.1f}"/>
                 <text x="90" y="82" text-anchor="middle" font-size="22" font-weight="700" fill="white">{pct:.0f}%</text>
             </svg>
             <div style="font-size:0.85rem;font-weight:600;color:{cor};margin-top:4px;">{status}</div>
             <div style="font-size:0.75rem;color:#aaa;margin-top:6px;line-height:1.5;">{label}</div>
-        </div>
-        """
+        </div>"""
 
     g1, g2, g3 = st.columns(3)
     with g1: st.markdown(gauge_html(pct_fat,  cor_fat,  "💰 Meta de Faturamento", status_fat,  label_fat),  unsafe_allow_html=True)
     with g2: st.markdown(gauge_html(pct_ativ, cor_ativ, "⚡ Meta de Ativações",   status_ativ, label_ativ), unsafe_allow_html=True)
     with g3: st.markdown(gauge_html(pct_manu, cor_manu, "🔧 Meta de Manutenções", status_manu, label_manu), unsafe_allow_html=True)
+
+    # ── Gráfico 4 — Evolução mensal do faturamento ────────────────────
+    st.divider()
+    st.subheader("📈 Evolução do Faturamento — Últimos 6 Meses")
+
+    meses_labels = []
+    meses_valores = []
+    meses_metas   = []
+    for i in range(5, -1, -1):
+        ref = today.replace(day=1) - dt.timedelta(days=1) * 0
+        # calcular mês relativo
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12; y -= 1
+        ym_ref = f"{y:04d}-{m:02d}"
+        label  = f"{m:02d}/{y}"
+        r = fetch_all(conn, "SELECT SUM(quantity*unit_value) as total FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
+                      (u.company_id, ym_ref))
+        val = float(r[0]["total"] or 0)
+        g   = fetch_one(conn, "SELECT goal_value FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
+                        (u.company_id, y, m))
+        meta = float(g["goal_value"]) if g else 0
+        meses_labels.append(label)
+        meses_valores.append(round(val, 2))
+        meses_metas.append(round(meta, 2))
+
+    import json
+    chart_evolucao = f"""
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <div style="background:#1a1a2e;border-radius:16px;padding:24px;">
+      <canvas id="chartEvolucao" height="80"></canvas>
+    </div>
+    <script>
+    new Chart(document.getElementById('chartEvolucao').getContext('2d'), {{
+      type: 'bar',
+      data: {{
+        labels: {json.dumps(meses_labels)},
+        datasets: [
+          {{
+            label: 'Faturamento (R$)',
+            data: {json.dumps(meses_valores)},
+            backgroundColor: 'rgba(126,45,127,0.75)',
+            borderColor: '#A64D9A',
+            borderWidth: 2,
+            borderRadius: 8,
+          }},
+          {{
+            label: 'Meta (R$)',
+            data: {json.dumps(meses_metas)},
+            type: 'line',
+            borderColor: '#FFC107',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [6,3],
+            pointBackgroundColor: '#FFC107',
+            pointRadius: 5,
+            fill: false,
+            tension: 0.3,
+          }}
+        ]
+      }},
+      options: {{
+        responsive: true,
+        plugins: {{
+          legend: {{ labels: {{ color:'#fff', font:{{ size:13 }} }} }},
+          tooltip: {{
+            callbacks: {{
+              label: ctx => ctx.dataset.label + ': R$ ' + ctx.parsed.y.toLocaleString('pt-BR', {{minimumFractionDigits:2}})
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{ ticks:{{ color:'#ccc', font:{{ size:13 }} }}, grid:{{ color:'rgba(255,255,255,0.05)' }} }},
+          y: {{ beginAtZero:true, ticks:{{ color:'#ccc', font:{{ size:13 }},
+                callback: v => 'R$ ' + v.toLocaleString('pt-BR') }},
+                grid:{{ color:'rgba(255,255,255,0.08)' }} }}
+        }}
+      }}
+    }});
+    </script>
+    """
+    st.components.v1.html(chart_evolucao, height=360)
 
 # ==============================
 # LANÇAMENTO DIÁRIO
@@ -474,7 +518,7 @@ def page_daily_entry():
     services = df_from_rows(fetch_all(conn, "SELECT id, name, category, default_unit_value FROM service_types WHERE company_id=? AND is_active=1 ORDER BY name", (u.company_id,)))
 
     if techs.empty:
-        st.warning("Cadastre pelo menos 1 técnico no Admin → Técnicos.")
+        st.warning("Cadastre pelo menos 1 técnico em Administração → Técnicos.")
         return
 
     entry_date = st.date_input("Data", value=dt.date.today())
@@ -503,9 +547,7 @@ def page_daily_entry():
                          (u.company_id, entry_date.isoformat(), tech_id, team_id, region_id, service_id,
                           float(quantity), float(unit_value), notes.strip() if notes else None,
                           dt.datetime.utcnow().isoformat()))
-            conn.commit()
-            st.success("Lançamento salvo!")
-            st.rerun()
+            conn.commit(); st.success("Lançamento salvo!"); st.rerun()
 
     st.subheader("Lançamentos do dia")
     rows = fetch_all(conn, """
@@ -515,9 +557,9 @@ def page_daily_entry():
                (e.quantity * e.unit_value) AS Receita,
                COALESCE(e.notes,'') AS Observacao
         FROM entries e
-        JOIN technicians t   ON t.id  = e.technician_id
-        LEFT JOIN teams tm   ON tm.id = e.team_id
-        LEFT JOIN regions r  ON r.id  = e.region_id
+        JOIN technicians t    ON t.id  = e.technician_id
+        LEFT JOIN teams tm    ON tm.id = e.team_id
+        LEFT JOIN regions r   ON r.id  = e.region_id
         JOIN service_types st ON st.id = e.service_type_id
         WHERE e.company_id=? AND e.entry_date=?
         ORDER BY e.id DESC
@@ -529,12 +571,58 @@ def page_daily_entry():
         return
 
     st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
-
     total_rev = df["Receita"].sum()
     total_srv = df["Qtd"].sum()
     st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Totais do dia</div>"
-                f"<div class='techno-value'>{total_srv:.0f} serviços • R$ {total_rev:,.2f}</div></div>",
-                unsafe_allow_html=True)
+                f"<div class='techno-value'>{total_srv:.0f} serviços • R$ {total_rev:,.2f}</div></div>", unsafe_allow_html=True)
+
+    with st.expander("✏️ Editar lançamento"):
+        edit_id = st.selectbox("Selecione o lançamento para editar", df["id"].tolist(),
+                               format_func=lambda x: f"ID {x} — {df.loc[df['id']==x,'Tecnico'].values[0]} | {df.loc[df['id']==x,'Servico'].values[0]} | Qtd {df.loc[df['id']==x,'Qtd'].values[0]:.0f}")
+        row_edit = fetch_one(conn, """SELECT e.*, t.name as tech_name, tm.name as team_name,
+                   r.name as region_name, st.name as service_name
+            FROM entries e JOIN technicians t ON t.id=e.technician_id
+            LEFT JOIN teams tm ON tm.id=e.team_id LEFT JOIN regions r ON r.id=e.region_id
+            JOIN service_types st ON st.id=e.service_type_id
+            WHERE e.id=? AND e.company_id=?""", (int(edit_id), u.company_id))
+        if row_edit:
+            with st.form("edit_entry_form"):
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    e_tech = st.selectbox("Técnico", techs["name"].tolist(),
+                                          index=techs["name"].tolist().index(row_edit["tech_name"]) if row_edit["tech_name"] in techs["name"].tolist() else 0)
+                    e_team_list = teams["name"].tolist() if not teams.empty else ["Solo"]
+                    e_team = st.selectbox("Equipe", e_team_list,
+                                          index=e_team_list.index(row_edit["team_name"]) if row_edit["team_name"] in e_team_list else 0)
+                    e_region_list = regions["name"].tolist() if not regions.empty else ["Geral"]
+                    e_region = st.selectbox("Região", e_region_list,
+                                            index=e_region_list.index(row_edit["region_name"]) if row_edit["region_name"] in e_region_list else 0)
+                with ec2:
+                    e_svc_list = services["name"].tolist()
+                    e_service = st.selectbox("Tipo de Serviço", e_svc_list,
+                                             index=e_svc_list.index(row_edit["service_name"]) if row_edit["service_name"] in e_svc_list else 0)
+                    e_qty  = st.number_input("Quantidade", min_value=0.0, value=float(row_edit["quantity"]), step=1.0)
+                    e_unit = st.number_input("Valor Unitário (R$)", min_value=0.0, value=float(row_edit["unit_value"]), step=1.0)
+                e_notes   = st.text_area("Observação", value=row_edit["notes"] or "")
+                save_edit = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
+                if save_edit:
+                    e_tech_id    = int(techs.loc[techs["name"] == e_tech, "id"].iloc[0])
+                    e_team_id    = int(teams.loc[teams["name"] == e_team, "id"].iloc[0]) if not teams.empty else None
+                    e_region_id  = int(regions.loc[regions["name"] == e_region, "id"].iloc[0]) if not regions.empty else None
+                    e_service_id = int(services.loc[services["name"] == e_service, "id"].iloc[0])
+                    conn.execute("""UPDATE entries SET technician_id=?, team_id=?, region_id=?,
+                                        service_type_id=?, quantity=?, unit_value=?, notes=?
+                                    WHERE id=? AND company_id=?""",
+                                 (e_tech_id, e_team_id, e_region_id, e_service_id,
+                                  float(e_qty), float(e_unit), e_notes.strip() if e_notes else None,
+                                  int(edit_id), u.company_id))
+                    conn.commit(); st.success("Atualizado!"); st.rerun()
+
+    with st.expander("🗑️ Excluir lançamento"):
+        del_id = st.selectbox("Selecione o ID para excluir", df["id"].tolist(), format_func=lambda x: f"ID {x}")
+        if st.button("Excluir", type="secondary"):
+            conn.execute("DELETE FROM entries WHERE company_id=? AND id=?", (u.company_id, int(del_id)))
+            conn.commit(); st.success("Excluído."); st.rerun()
 
 # ==============================
 # RESUMO MENSAL
@@ -550,22 +638,20 @@ def page_monthly_summary():
     ym    = f"{int(year):04d}-{int(month):02d}"
 
     conn = get_conn()
-    rows = fetch_all(conn, """
-        SELECT st.category, e.quantity, e.unit_value, e.entry_date
+    rows = fetch_all(conn, """SELECT st.category, e.quantity, e.unit_value, e.entry_date
         FROM entries e JOIN service_types st ON st.id=e.service_type_id
-        WHERE e.company_id=? AND substr(e.entry_date,1,7)=?
-    """, (u.company_id, ym))
+        WHERE e.company_id=? AND substr(e.entry_date,1,7)=?""", (u.company_id, ym))
 
-    if not rows:
-        st.info("Sem dados para este mês.")
-        return
+    if not rows: st.info("Sem dados para este mês."); return
 
     df = pd.DataFrame([dict(r) for r in rows])
     df["receita"] = df["quantity"] * df["unit_value"]
 
-    total_ativ = df.loc[df["category"] == "ativacao",   "quantity"].sum()
-    total_manu = df.loc[df["category"] == "manutencao", "quantity"].sum()
+    total_ativ = df.loc[df["category"]=="ativacao",   "quantity"].sum()
+    total_manu = df.loc[df["category"]=="manutencao", "quantity"].sum()
     total_srv  = df["quantity"].sum()
+    rec_ativ   = df.loc[df["category"]=="ativacao",   "receita"].sum()
+    rec_manu   = df.loc[df["category"]=="manutencao", "receita"].sum()
     rec_total  = df["receita"].sum()
 
     goal_row   = fetch_one(conn, "SELECT goal_value FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
@@ -579,25 +665,201 @@ def page_monthly_summary():
     with c2: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Total manutenções</div><div class='techno-value'>{total_manu:.0f}</div></div>", unsafe_allow_html=True)
     with c3: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Total serviços</div><div class='techno-value'>{total_srv:.0f}</div></div>", unsafe_allow_html=True)
     st.divider()
-
+    c4, c5, c6 = st.columns(3)
+    with c4: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita ativações</div><div class='techno-value'>R$ {rec_ativ:,.2f}</div></div>", unsafe_allow_html=True)
+    with c5: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita manutenções</div><div class='techno-value'>R$ {rec_manu:,.2f}</div></div>", unsafe_allow_html=True)
+    with c6: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita bruta mensal</div><div class='techno-value'>R$ {rec_total:,.2f}</div></div>", unsafe_allow_html=True)
+    st.divider()
     cA, cB, cC = st.columns(3)
-    with cA: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita bruta mensal</div><div class='techno-value'>R$ {rec_total:,.2f}</div></div>", unsafe_allow_html=True)
+    with cA: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Meta de receita</div><div class='techno-value'>R$ {goal_value:,.2f}</div></div>", unsafe_allow_html=True)
     with cB:
         v = f"{pct:.0f}%" if pct is not None else "—"
         st.markdown(f"<div class='techno-card'><div class='techno-kpi'>% meta atingida</div><div class='techno-value'>{v}</div></div>", unsafe_allow_html=True)
     with cC: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita média diária</div><div class='techno-value'>R$ {avg_daily:,.2f}</div></div>", unsafe_allow_html=True)
 
 # ==============================
-# INDICADORES DOS TÉCNICOS
+# INDICADORES — helpers
 # ==============================
 def _semaforo(media, meta_media, limiar_pct=0.833):
-    if media >= meta_media:
-        return "kpi-green",  "🟢", "No alvo"
-    elif media >= meta_media * limiar_pct:
-        return "kpi-orange", "🟠", "Atenção"
-    else:
-        return "kpi-red",    "🔴", "Abaixo"
+    if media >= meta_media:          return "kpi-green",  "🟢", "No alvo"
+    elif media >= meta_media * limiar_pct: return "kpi-orange", "🟠", "Atenção"
+    else:                            return "kpi-red",    "🔴", "Abaixo"
 
+def _calc_perf_tecnico(conn, company_id, ym, tech_name):
+    """Calcula métricas de um técnico para o mês ym. Retorna dict sem receita."""
+    dias_rows = fetch_all(conn, """
+        SELECT e.entry_date, MAX(CASE WHEN tm.name='Solo' THEN 1 ELSE 0 END) as is_solo
+        FROM entries e JOIN technicians t ON t.id=e.technician_id
+        LEFT JOIN teams tm ON tm.id=e.team_id
+        WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND t.name=?
+        GROUP BY e.entry_date""", (company_id, ym, tech_name))
+
+    dias_solo   = sum(1 for d in dias_rows if d["is_solo"] == 1)
+    dias_equipe = sum(1 for d in dias_rows if d["is_solo"] == 0)
+    total_dias  = dias_solo + dias_equipe
+
+    svc_rows = fetch_all(conn, """
+        SELECT SUM(CASE WHEN st.category='ativacao'   THEN e.quantity ELSE 0 END) as ativ,
+               SUM(CASE WHEN st.category='manutencao' THEN e.quantity ELSE 0 END) as manu
+        FROM entries e JOIN technicians t ON t.id=e.technician_id
+        JOIN service_types st ON st.id=e.service_type_id
+        WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND t.name=?""",
+        (company_id, ym, tech_name))
+
+    ativ_total = float(svc_rows[0]["ativ"] or 0) if svc_rows else 0
+    manu_total = float(svc_rows[0]["manu"] or 0) if svc_rows else 0
+
+    meta_ativ_total = (dias_solo * 3) + (dias_equipe * 4)
+    meta_manu_total = (dias_solo * 4) + (dias_equipe * 6)
+    media_ativ      = ativ_total / total_dias      if total_dias > 0 else 0.0
+    media_manu      = manu_total / total_dias      if total_dias > 0 else 0.0
+    meta_ativ_media = meta_ativ_total / total_dias if total_dias > 0 else 3.0
+    meta_manu_media = meta_manu_total / total_dias if total_dias > 0 else 4.0
+    pct_ativ        = (ativ_total / meta_ativ_total * 100) if meta_ativ_total > 0 else 0
+    pct_manu        = (manu_total / meta_manu_total * 100) if meta_manu_total > 0 else 0
+    cor_a, sem_a, st_a = _semaforo(media_ativ, meta_ativ_media)
+    cor_m, sem_m, st_m = _semaforo(media_manu, meta_manu_media)
+
+    return {
+        "Tecnico": tech_name, "DiasSolo": dias_solo, "DiasEquipe": dias_equipe,
+        "DiasTrabalh": total_dias,
+        "AtivTotal": ativ_total, "MediaAtiv": media_ativ, "MetaAtivMedia": meta_ativ_media,
+        "PctAtiv": pct_ativ, "CorAtiv": cor_a, "SemAtiv": sem_a, "StAtiv": st_a,
+        "ManuTotal": manu_total, "MediaManu": media_manu, "MetaManuMedia": meta_manu_media,
+        "PctManu": pct_manu, "CorManu": cor_m, "SemManu": sem_m, "StManu": st_m,
+    }
+
+def _render_cards(perf_data, show_receita=True):
+    n_cols = min(len(perf_data), 3)
+    cols   = st.columns(n_cols)
+    for i, p in enumerate(perf_data):
+        with cols[i % n_cols]:
+            receita_html = f"<div style='margin-top:8px;font-size:0.78rem;color:#aaa;text-align:right;'>Receita: R$ {p.get('ReceitaGerada',0):,.0f}</div>" if show_receita else ""
+            st.markdown(f"""
+            <div style="background:#1e1e2f;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:16px 18px;margin-bottom:10px;">
+                <div style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;">
+                    👤 {p['Tecnico']}
+                    <span style="font-size:0.78rem;color:#aaa;">&nbsp;{p['DiasTrabalh']}d ({p['DiasSolo']}solo+{p['DiasEquipe']}eq)</span>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <div style="flex:1;background:{'#0d3320' if p['CorAtiv']=='kpi-green' else '#3d2400' if p['CorAtiv']=='kpi-orange' else '#3d0000'};
+                                border:1px solid {'#2ecc71' if p['CorAtiv']=='kpi-green' else '#f39c12' if p['CorAtiv']=='kpi-orange' else '#e74c3c'};
+                                border-radius:10px;padding:10px 12px;">
+                        <div style="font-size:0.78rem;color:#ccc;">⚡ Ativação</div>
+                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaAtiv']:.2f}<span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
+                        <div style="font-size:0.75rem;color:#ccc;">{p['SemAtiv']} {p['StAtiv']}<br>Meta {p['MetaAtivMedia']:.1f} | {p['PctAtiv']:.0f}% cumprido</div>
+                    </div>
+                    <div style="flex:1;background:{'#0d3320' if p['CorManu']=='kpi-green' else '#3d2400' if p['CorManu']=='kpi-orange' else '#3d0000'};
+                                border:1px solid {'#2ecc71' if p['CorManu']=='kpi-green' else '#f39c12' if p['CorManu']=='kpi-orange' else '#e74c3c'};
+                                border-radius:10px;padding:10px 12px;">
+                        <div style="font-size:0.78rem;color:#ccc;">🔧 Manutenção</div>
+                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaManu']:.2f}<span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
+                        <div style="font-size:0.75rem;color:#ccc;">{p['SemManu']} {p['StManu']}<br>Meta {p['MetaManuMedia']:.1f} | {p['PctManu']:.0f}% cumprido</div>
+                    </div>
+                </div>
+                {receita_html}
+            </div>""", unsafe_allow_html=True)
+
+# ==============================
+# INDICADORES — visão técnico (próprio)
+# ==============================
+def page_meu_indicador():
+    """Tela exclusiva para role=technician: vê só os próprios indicadores, sem receita."""
+    require_login()
+    u     = get_user()
+    today = dt.date.today()
+    conn  = get_conn()
+
+    # Descobre o nome do técnico pelo username (case-insensitive)
+    tech_row = fetch_one(conn,
+        "SELECT name FROM technicians WHERE company_id=? AND LOWER(name)=LOWER(?)",
+        (u.company_id, u.username))
+
+    if not tech_row:
+        st.warning(f"Nenhum técnico encontrado com o nome '{u.username}'. Peça ao administrador para verificar o cadastro.")
+        return
+
+    tech_name = tech_row["name"]
+    st.header(f"Meus Indicadores — {tech_name}")
+    st.caption("Ativação: Solo = 3/dia | Equipe = 4/dia    •    Manutenção: Solo = 4/dia | Equipe = 6/dia")
+
+    # Seletor: mês atual ou anterior
+    opcoes_mes = []
+    for i in range(2):
+        m = today.month - i
+        y = today.year
+        if m <= 0: m += 12; y -= 1
+        opcoes_mes.append((f"{m:02d}/{y}", y, m))
+
+    sel = st.radio("Mês", [o[0] for o in opcoes_mes], horizontal=True)
+    _, sel_y, sel_m = next(o for o in opcoes_mes if o[0] == sel)
+    ym = f"{sel_y:04d}-{sel_m:02d}"
+
+    p = _calc_perf_tecnico(conn, u.company_id, ym, tech_name)
+
+    if p["DiasTrabalh"] == 0:
+        st.info("Sem lançamentos para este mês.")
+        return
+
+    # Card único sem receita
+    _render_cards([p], show_receita=False)
+
+    st.divider()
+
+    # Mini gráfico dos 2 últimos meses
+    import json
+    hist_labels, hist_ativ, hist_manu, hist_meta_ativ, hist_meta_manu = [], [], [], [], []
+    for i in range(1, -1, -1):
+        m = today.month - i
+        y = today.year
+        if m <= 0: m += 12; y -= 1
+        ym_h = f"{y:04d}-{m:02d}"
+        ph   = _calc_perf_tecnico(conn, u.company_id, ym_h, tech_name)
+        hist_labels.append(f"{m:02d}/{y}")
+        hist_ativ.append(round(ph["MediaAtiv"], 2))
+        hist_manu.append(round(ph["MediaManu"], 2))
+        hist_meta_ativ.append(round(ph["MetaAtivMedia"], 2))
+        hist_meta_manu.append(round(ph["MetaManuMedia"], 2))
+
+    chart_tec = f"""
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <div style="background:#1a1a2e;border-radius:16px;padding:24px;">
+      <canvas id="chartTec" height="120"></canvas>
+    </div>
+    <script>
+    new Chart(document.getElementById('chartTec').getContext('2d'), {{
+      type:'bar',
+      data:{{
+        labels:{json.dumps(hist_labels)},
+        datasets:[
+          {{ label:'⚡ Média Ativ/Dia', data:{json.dumps(hist_ativ)},
+             backgroundColor:'rgba(46,204,113,0.75)', borderColor:'#2ecc71', borderWidth:2, borderRadius:8 }},
+          {{ label:'🔧 Média Manu/Dia', data:{json.dumps(hist_manu)},
+             backgroundColor:'rgba(100,160,255,0.75)', borderColor:'#64a0ff', borderWidth:2, borderRadius:8 }},
+          {{ label:'Meta Ativ', data:{json.dumps(hist_meta_ativ)}, type:'line',
+             borderColor:'#FFC107', backgroundColor:'transparent', borderWidth:2,
+             borderDash:[6,3], pointBackgroundColor:'#FFC107', pointRadius:5, fill:false }},
+          {{ label:'Meta Manu', data:{json.dumps(hist_meta_manu)}, type:'line',
+             borderColor:'#a78bfa', backgroundColor:'transparent', borderWidth:2,
+             borderDash:[4,4], pointBackgroundColor:'#a78bfa', pointRadius:5, fill:false }}
+        ]
+      }},
+      options:{{
+        responsive:true,
+        plugins:{{ legend:{{ labels:{{ color:'#fff', font:{{ size:12 }} }} }} }},
+        scales:{{
+          x:{{ ticks:{{ color:'#ccc' }}, grid:{{ color:'rgba(255,255,255,0.05)' }} }},
+          y:{{ beginAtZero:true, ticks:{{ color:'#ccc' }}, grid:{{ color:'rgba(255,255,255,0.08)' }} }}
+        }}
+      }}
+    }});
+    </script>"""
+    st.subheader("📊 Evolução — Mês Atual vs Anterior")
+    st.components.v1.html(chart_tec, height=380)
+
+# ==============================
+# INDICADORES — visão gestão (todos)
+# ==============================
 def page_technician_kpis():
     require_login()
     u     = get_user()
@@ -609,163 +871,41 @@ def page_technician_kpis():
     ym    = f"{int(year):04d}-{int(month):02d}"
 
     conn = get_conn()
-
-    # ✅ BARRA DE INFORMAÇÕES (voltou)
-    rows_bar = fetch_all(conn, """
-        SELECT st.category, e.quantity, e.unit_value
-        FROM entries e JOIN service_types st ON st.id=e.service_type_id
-        WHERE e.company_id=? AND substr(e.entry_date,1,7)=?
-    """, (u.company_id, ym))
-
-    if rows_bar:
-        dfb = pd.DataFrame([dict(r) for r in rows_bar])
-        dfb["receita"] = dfb["quantity"] * dfb["unit_value"]
-
-        total_rec = dfb["receita"].sum()
-        ativ_qtd  = dfb.loc[dfb["category"]=="ativacao","quantity"].sum()
-        manu_qtd  = dfb.loc[dfb["category"]=="manutencao","quantity"].sum()
-        dias      = fetch_one(conn, "SELECT COUNT(DISTINCT entry_date) AS n FROM entries WHERE company_id=? AND substr(entry_date,1,7)=?",
-                              (u.company_id, ym))
-        dias_lanc = int(dias["n"] or 0)
-        media_dia = total_rec / dias_lanc if dias_lanc > 0 else 0
-
-        b1,b2,b3,b4 = st.columns(4)
-        with b1: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Receita do mês</div><div class='techno-value'>R$ {total_rec:,.2f}</div></div>", unsafe_allow_html=True)
-        with b2: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Ativações</div><div class='techno-value'>{ativ_qtd:.0f}</div></div>", unsafe_allow_html=True)
-        with b3: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Manutenções</div><div class='techno-value'>{manu_qtd:.0f}</div></div>", unsafe_allow_html=True)
-        with b4: st.markdown(f"<div class='techno-card'><div class='techno-kpi'>Média R$/dia</div><div class='techno-value'>R$ {media_dia:,.0f}</div></div>", unsafe_allow_html=True)
-
-        st.divider()
-
     tech_rows = fetch_all(conn, """
-        SELECT t.name as Tecnico,
-               SUM(CASE WHEN st.category='ativacao'   THEN e.quantity ELSE 0 END) as AtivacoesTotais,
-               SUM(CASE WHEN st.category='manutencao' THEN e.quantity ELSE 0 END) as ManutencoesTotais,
-               SUM(e.quantity)              as TotalServicos,
-               SUM(e.quantity*e.unit_value) as ReceitaGerada,
-               COUNT(DISTINCT e.entry_date) as DiasComLancamento
-        FROM entries e
-        JOIN technicians t    ON t.id  = e.technician_id
-        JOIN service_types st ON st.id = e.service_type_id
+        SELECT t.name as Tecnico, SUM(e.quantity*e.unit_value) as ReceitaGerada
+        FROM entries e JOIN technicians t ON t.id=e.technician_id
+        JOIN service_types st ON st.id=e.service_type_id
         WHERE e.company_id=? AND substr(e.entry_date,1,7)=?
-        GROUP BY t.name ORDER BY ReceitaGerada DESC
-    """, (u.company_id, ym))
+        GROUP BY t.name ORDER BY ReceitaGerada DESC""", (u.company_id, ym))
 
     df = df_from_rows(tech_rows)
-    if df.empty:
-        st.info("Sem dados para este mês.")
-        return
+    if df.empty: st.info("Sem dados para este mês."); return
 
     perf_data = []
     for _, row in df.iterrows():
-        tech_name = row["Tecnico"]
-        dias_rows = fetch_all(conn, """
-            SELECT e.entry_date,
-                   MAX(CASE WHEN tm.name = 'Solo' THEN 1 ELSE 0 END) as is_solo
-            FROM entries e
-            JOIN technicians t ON t.id = e.technician_id
-            LEFT JOIN teams tm ON tm.id = e.team_id
-            WHERE e.company_id=? AND substr(e.entry_date,1,7)=? AND t.name=?
-            GROUP BY e.entry_date
-        """, (u.company_id, ym, tech_name))
-
-        dias_solo   = sum(1 for d in dias_rows if d["is_solo"] == 1)
-        dias_equipe = sum(1 for d in dias_rows if d["is_solo"] == 0)
-        total_dias  = dias_solo + dias_equipe
-
-        meta_ativ_total = (dias_solo * 3) + (dias_equipe * 4)
-        ativ_total      = float(row["AtivacoesTotais"] or 0)
-        media_ativ      = ativ_total / total_dias       if total_dias > 0 else 0.0
-        meta_ativ_media = meta_ativ_total / total_dias  if total_dias > 0 else 3.0
-        pct_ativ        = (ativ_total / meta_ativ_total * 100) if meta_ativ_total > 0 else 0
-        cor_a, sem_a, st_a = _semaforo(media_ativ, meta_ativ_media)
-
-        meta_manu_total = (dias_solo * 4) + (dias_equipe * 6)
-        manu_total      = float(row["ManutencoesTotais"] or 0)
-        media_manu      = manu_total / total_dias       if total_dias > 0 else 0.0
-        meta_manu_media = meta_manu_total / total_dias  if total_dias > 0 else 4.0
-        pct_manu        = (manu_total / meta_manu_total * 100) if meta_manu_total > 0 else 0
-        cor_m, sem_m, st_m = _semaforo(media_manu, meta_manu_media)
-
-        perf_data.append({
-            "Tecnico": tech_name,
-            "DiasSolo": dias_solo,
-            "DiasEquipe": dias_equipe,
-            "DiasTrabalh": total_dias,
-            "ReceitaGerada": float(row["ReceitaGerada"] or 0),
-            "AtivTotal": ativ_total,
-            "MediaAtiv": media_ativ,
-            "MetaAtivMedia": meta_ativ_media,
-            "PctAtiv": pct_ativ,
-            "CorAtiv": cor_a,
-            "SemAtiv": sem_a,
-            "StAtiv": st_a,
-            "ManuTotal": manu_total,
-            "MediaManu": media_manu,
-            "MetaManuMedia": meta_manu_media,
-            "PctManu": pct_manu,
-            "CorManu": cor_m,
-            "SemManu": sem_m,
-            "StManu": st_m,
-        })
+        p = _calc_perf_tecnico(conn, u.company_id, ym, row["Tecnico"])
+        p["ReceitaGerada"] = float(row["ReceitaGerada"] or 0)
+        perf_data.append(p)
 
     st.subheader("🚦 Desempenho por Técnico")
     st.caption("Ativação: Solo = 3/dia | Equipe = 4/dia    •    Manutenção: Solo = 4/dia | Equipe = 6/dia")
-
-    n_cols = min(len(perf_data), 3)
-    cols   = st.columns(n_cols)
-    for i, p in enumerate(perf_data):
-        with cols[i % n_cols]:
-            st.markdown(f"""
-            <div style="background:#1e1e2f;border:1px solid rgba(255,255,255,0.12);
-                        border-radius:16px;padding:16px 18px;margin-bottom:10px;">
-                <div style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;">
-                    👤 {p['Tecnico']}
-                    &nbsp;<span style="font-size:0.78rem;color:#aaa;">
-                        {p['DiasTrabalh']}d ({p['DiasSolo']}solo+{p['DiasEquipe']}eq)
-                    </span>
-                </div>
-                <div style="display:flex;gap:10px;">
-                    <div style="flex:1;background:{'#0d3320' if p['CorAtiv']=='kpi-green' else '#3d2400' if p['CorAtiv']=='kpi-orange' else '#3d0000'};
-                                border:1px solid {'#2ecc71' if p['CorAtiv']=='kpi-green' else '#f39c12' if p['CorAtiv']=='kpi-orange' else '#e74c3c'};
-                                border-radius:10px;padding:10px 12px;">
-                        <div style="font-size:0.78rem;color:#ccc;">⚡ Ativação</div>
-                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaAtiv']:.2f}
-                            <span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
-                        <div style="font-size:0.75rem;color:#ccc;">
-                            {p['SemAtiv']} {p['StAtiv']}<br>
-                            Meta {p['MetaAtivMedia']:.1f} &nbsp;|&nbsp; {p['PctAtiv']:.0f}% cumprido
-                        </div>
-                    </div>
-                    <div style="flex:1;background:{'#0d3320' if p['CorManu']=='kpi-green' else '#3d2400' if p['CorManu']=='kpi-orange' else '#3d0000'};
-                                border:1px solid {'#2ecc71' if p['CorManu']=='kpi-green' else '#f39c12' if p['CorManu']=='kpi-orange' else '#e74c3c'};
-                                border-radius:10px;padding:10px 12px;">
-                        <div style="font-size:0.78rem;color:#ccc;">🔧 Manutenção</div>
-                        <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaManu']:.2f}
-                            <span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
-                        <div style="font-size:0.75rem;color:#ccc;">
-                            {p['SemManu']} {p['StManu']}<br>
-                            Meta {p['MetaManuMedia']:.1f} &nbsp;|&nbsp; {p['PctManu']:.0f}% cumprido
-                        </div>
-                    </div>
-                </div>
-                <div style="margin-top:8px;font-size:0.78rem;color:#aaa;text-align:right;">
-                    Receita: R$ {p['ReceitaGerada']:,.0f}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    _render_cards(perf_data, show_receita=True)
 
     st.divider()
-
-    # ✅ GRÁFICO (voltou/permanece)
     st.subheader("📊 Comparativo — Ativação & Manutenção por Técnico")
-    import json
 
-    nomes       = [p["Tecnico"] for p in perf_data]
-    medias_ativ = [round(p["MediaAtiv"], 2) for p in perf_data]
-    medias_manu = [round(p["MediaManu"], 2) for p in perf_data]
+    import json
+    nomes       = [p["Tecnico"]                 for p in perf_data]
+    medias_ativ = [round(p["MediaAtiv"], 2)     for p in perf_data]
     metas_ativ  = [round(p["MetaAtivMedia"], 2) for p in perf_data]
+    medias_manu = [round(p["MediaManu"], 2)     for p in perf_data]
     metas_manu  = [round(p["MetaManuMedia"], 2) for p in perf_data]
+    def hc(p, k):
+        c = p[k]
+        return "#2ecc71" if c=="kpi-green" else "#f39c12" if c=="kpi-orange" else "#e74c3c"
+    cores_ativ = [hc(p,"CorAtiv") for p in perf_data]
+    cores_manu_rgba = ["rgba(100,160,255,0.85)" if p["CorManu"]=="kpi-green" else "rgba(255,150,50,0.85)" if p["CorManu"]=="kpi-orange" else "rgba(220,60,60,0.85)" for p in perf_data]
+    cores_manu_border = ["#64a0ff" if p["CorManu"]=="kpi-green" else "#ff9632" if p["CorManu"]=="kpi-orange" else "#dc3c3c" for p in perf_data]
 
     chart_html = f"""
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -774,62 +914,53 @@ def page_technician_kpis():
     </div>
     <script>
     new Chart(document.getElementById('kpiUnified').getContext('2d'), {{
-      type: 'bar',
-      data: {{
-        labels: {json.dumps(nomes)},
-        datasets: [
-          {{
-            label: '⚡ Ativação média/dia',
-            data: {json.dumps(medias_ativ)},
-            backgroundColor: 'rgba(242,178,51,0.85)',
-            borderWidth: 1,
-            borderRadius: 6,
-          }},
-          {{
-            label: '🔧 Manutenção média/dia',
-            data: {json.dumps(medias_manu)},
-            backgroundColor: 'rgba(167,139,250,0.85)',
-            borderWidth: 1,
-            borderRadius: 6,
-          }},
-          {{
-            label: 'Meta Ativação',
-            data: {json.dumps(metas_ativ)},
-            type: 'line',
-            borderColor: '#FFC107',
-            borderDash: [6, 3],
-            pointBackgroundColor: '#FFC107',
-            pointRadius: 5,
-            fill: false,
-            tension: 0.3,
-          }},
-          {{
-            label: 'Meta Manutenção',
-            data: {json.dumps(metas_manu)},
-            type: 'line',
-            borderColor: '#a78bfa',
-            borderDash: [4, 4],
-            pointBackgroundColor: '#a78bfa',
-            pointRadius: 5,
-            fill: false,
-            tension: 0.3,
-          }}
+      type:'bar',
+      data:{{
+        labels:{json.dumps(nomes)},
+        datasets:[
+          {{ label:'⚡ Ativação média/dia', data:{json.dumps(medias_ativ)},
+             backgroundColor:{json.dumps(cores_ativ)}, borderColor:{json.dumps(cores_ativ)},
+             borderWidth:2, borderRadius:6, barPercentage:0.4, categoryPercentage:0.8 }},
+          {{ label:'🔧 Manutenção média/dia', data:{json.dumps(medias_manu)},
+             backgroundColor:{json.dumps(cores_manu_rgba)}, borderColor:{json.dumps(cores_manu_border)},
+             borderWidth:2, borderRadius:6, barPercentage:0.4, categoryPercentage:0.8 }},
+          {{ label:'Meta Ativação', data:{json.dumps(metas_ativ)}, type:'line',
+             borderColor:'#FFC107', backgroundColor:'transparent', borderWidth:2,
+             borderDash:[6,3], pointBackgroundColor:'#FFC107', pointRadius:5, fill:false, tension:0.3 }},
+          {{ label:'Meta Manutenção', data:{json.dumps(metas_manu)}, type:'line',
+             borderColor:'#a78bfa', backgroundColor:'transparent', borderWidth:2,
+             borderDash:[4,4], pointBackgroundColor:'#a78bfa', pointRadius:5, fill:false, tension:0.3 }}
         ]
       }},
-      options: {{
-        responsive: true,
-        plugins: {{
-          legend: {{ labels: {{ color: '#fff' }} }}
-        }},
-        scales: {{
-          x: {{ ticks: {{ color: '#ccc' }}, grid: {{ color: 'rgba(255,255,255,0.05)' }} }},
-          y: {{ beginAtZero: true, ticks: {{ color: '#ccc' }}, grid: {{ color: 'rgba(255,255,255,0.08)' }} }}
+      options:{{
+        responsive:true, interaction:{{mode:'index',intersect:false}},
+        plugins:{{ legend:{{ labels:{{ color:'#fff', font:{{ size:12 }}, padding:16 }} }},
+                   tooltip:{{ callbacks:{{ label: ctx => ctx.dataset.label+': '+ctx.parsed.y.toFixed(2) }} }} }},
+        scales:{{
+          x:{{ ticks:{{ color:'#ccc', font:{{ size:13 }} }}, grid:{{ color:'rgba(255,255,255,0.05)' }} }},
+          y:{{ beginAtZero:true, ticks:{{ color:'#ccc', font:{{ size:13 }} }}, grid:{{ color:'rgba(255,255,255,0.08)' }} }}
         }}
       }}
     }});
-    </script>
-    """
-    st.components.v1.html(chart_html, height=420)
+    </script>"""
+    st.components.v1.html(chart_html, height=400)
+
+    st.divider()
+    st.subheader("📋 Tabela Detalhada")
+    df_show = pd.DataFrame([{
+        "Técnico":          p["Tecnico"],
+        "Status Ativ":      p["SemAtiv"]+" "+p["StAtiv"],
+        "Média Ativ/Dia":   round(p["MediaAtiv"],2),
+        "Meta Ativ/Dia":    round(p["MetaAtivMedia"],1),
+        "% Meta Ativ":      f"{p['PctAtiv']:.0f}%",
+        "Status Manu":      p["SemManu"]+" "+p["StManu"],
+        "Média Manu/Dia":   round(p["MediaManu"],2),
+        "Meta Manu/Dia":    round(p["MetaManuMedia"],1),
+        "% Meta Manu":      f"{p['PctManu']:.0f}%",
+        "Dias Trabalhados": p["DiasTrabalh"],
+        "Receita (R$)":     round(p["ReceitaGerada"],2),
+    } for p in perf_data])
+    st.dataframe(df_show, use_container_width=True, hide_index=True)
 
 # ==============================
 # ADMIN — EDITOR TABELAS
@@ -845,28 +976,21 @@ def admin_table_editor(title, table, company_id, key_prefix):
         name      = st.text_input("Nome", key=f"{key_prefix}_name")
         submitted = st.form_submit_button("Adicionar", use_container_width=True)
         if submitted:
-            if not name.strip():
-                st.error("Informe um nome.")
+            if not name.strip(): st.error("Informe um nome.")
             else:
                 try:
                     conn.execute(f"INSERT INTO {table}(company_id, name, is_active) VALUES (?,?,1)", (company_id, name.strip()))
-                    conn.commit()
-                    st.success("Adicionado.")
-                    st.rerun()
+                    conn.commit(); st.success("Adicionado."); st.rerun()
                 except sqlite3.IntegrityError:
                     st.error("Já existe um registro com esse nome.")
 
     st.divider()
-    if df.empty:
-        st.info("Nenhum registro cadastrado ainda.")
-        return
-
+    if df.empty: st.info("Nenhum registro cadastrado ainda."); return
     st.markdown("**Registros**")
     for row in rows:
         rid, name, is_active = int(row["id"]), row["name"], int(row["is_active"]) == 1
-        c1, c2, c3, c4 = st.columns([6, 2, 2, 2])
-        c1.write(name)
-        c2.write("✅ Ativo" if is_active else "⛔ Inativo")
+        c1, c2, c3, c4 = st.columns([6,2,2,2])
+        c1.write(name); c2.write("✅ Ativo" if is_active else "⛔ Inativo")
         if c3.button("Desativar" if is_active else "Ativar", key=f"{key_prefix}_toggle_{rid}"):
             conn.execute(f"UPDATE {table} SET is_active=? WHERE company_id=? AND id=?",
                          (0 if is_active else 1, company_id, rid))
@@ -878,8 +1002,7 @@ def admin_table_editor(title, table, company_id, key_prefix):
             cc1, cc2 = st.columns(2)
             if cc1.button("✅ Confirmar", key=f"{key_prefix}_confirm_yes_{rid}"):
                 conn.execute(f"DELETE FROM {table} WHERE company_id=? AND id=?", (company_id, rid))
-                conn.commit()
-                st.session_state[f"{key_prefix}_confirm_del"] = None
+                conn.commit(); st.session_state[f"{key_prefix}_confirm_del"] = None
                 st.success("Excluído."); st.rerun()
             if cc2.button("Cancelar", key=f"{key_prefix}_confirm_no_{rid}"):
                 st.session_state[f"{key_prefix}_confirm_del"] = None; st.rerun()
@@ -891,10 +1014,9 @@ def page_admin():
     require_login()
     u = get_user()
     require_role({"admin"})
-    st.header("Admin")
+    st.header("Administração")
 
-    tabs = st.tabs(["Técnicos", "Equipes", "Regiões", "Serviços/Valores", "Meta Mensal", "Usuários"])
-
+    tabs = st.tabs(["Técnicos","Equipes","Regiões","Serviços/Valores","Meta Mensal","Usuários"])
     with tabs[0]: admin_table_editor("Técnicos", "technicians", u.company_id, "tech")
     with tabs[1]: admin_table_editor("Equipes",  "teams",       u.company_id, "team")
     with tabs[2]: admin_table_editor("Regiões",  "regions",     u.company_id, "reg")
@@ -904,12 +1026,11 @@ def page_admin():
         conn = get_conn()
         rows = fetch_all(conn, "SELECT id, name, category, default_unit_value, is_active FROM service_types WHERE company_id=? ORDER BY name", (u.company_id,))
         df   = df_from_rows(rows)
-        if not df.empty:
-            st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
+        if not df.empty: st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
         with st.form("svc_add"):
             st.markdown("**Adicionar serviço**")
             name = st.text_input("Nome do serviço")
-            cat  = st.selectbox("Categoria", ["ativacao", "manutencao", "outros"])
+            cat  = st.selectbox("Categoria", ["ativacao","manutencao","outros"])
             val  = st.number_input("Valor padrão (R$)", min_value=0.0, value=0.0, step=1.0)
             ok   = st.form_submit_button("Adicionar", use_container_width=True)
             if ok:
@@ -930,10 +1051,8 @@ def page_admin():
         month = st.number_input("Mês da meta", min_value=1,    max_value=12,   value=today.month, step=1, key="gm")
         cur   = fetch_one(conn, "SELECT goal_value, goal_ativ_day, goal_manu_day FROM monthly_goals WHERE company_id=? AND year=? AND month=?",
                           (u.company_id, int(year), int(month)))
-
-        dias_uteis_adm = dias_uteis_mes(int(year), int(month))
+        dias_uteis_adm  = dias_uteis_mes(int(year), int(month))
         total_uteis_adm = len(dias_uteis_adm)
-
         st.info(f"📅 O mês {int(month):02d}/{int(year)} tem **{total_uteis_adm} dias úteis** (seg–sáb).")
 
         st.markdown("---")
@@ -945,20 +1064,26 @@ def page_admin():
         st.markdown("**⚡ Meta de Ativações**")
         col_a1, col_a2 = st.columns(2)
         with col_a1:
-            n_tec_ativ = st.number_input("Nº de técnicos ativos (ativação)", min_value=0, value=1, step=1)
+            n_tec_ativ = st.number_input("Nº de técnicos (ativação)", min_value=0, value=1, step=1)
         with col_a2:
             meta_ativ_por_tec = st.number_input("Meta por técnico/dia (ativação)", min_value=0.0, value=3.0, step=0.5)
         goal_ativ = n_tec_ativ * meta_ativ_por_tec
-        st.markdown(f"**Meta diária calculada: {goal_ativ:.0f} ativações/dia** → **{goal_ativ * total_uteis_adm:.0f} no mês**")
+        st.markdown(f"**Meta diária: {goal_ativ:.0f} ativ/dia** ({n_tec_ativ} × {meta_ativ_por_tec:.1f}) → **{goal_ativ*total_uteis_adm:.0f} no mês**")
 
         st.markdown("---")
         st.markdown("**🔧 Meta de Manutenções**")
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            n_tec_manu = st.number_input("Nº de técnicos ativos (manutenção)", min_value=0, value=0, step=1)
+            n_tec_manu = st.number_input("Nº de técnicos (manutenção)", min_value=0, value=0, step=1)
         with col_m2:
             meta_manu_por_tec = st.number_input("Meta por técnico/dia (manutenção)", min_value=0.0, value=4.0, step=0.5)
         goal_manu = n_tec_manu * meta_manu_por_tec
+        if goal_manu > 0:
+            st.markdown(f"**Meta diária: {goal_manu:.0f} manu/dia** ({n_tec_manu} × {meta_manu_por_tec:.1f}) → **{goal_manu*total_uteis_adm:.0f} no mês**")
+        else:
+            st.markdown("_Sem meta de manutenção configurada para este mês._")
+
+        st.markdown("---")
         if st.button("Salvar metas", type="primary"):
             conn.execute("""INSERT INTO monthly_goals(company_id, year, month, goal_value, goal_ativ_day, goal_manu_day)
                             VALUES (?,?,?,?,?,?)
@@ -967,26 +1092,25 @@ def page_admin():
                                 goal_ativ_day=excluded.goal_ativ_day,
                                 goal_manu_day=excluded.goal_manu_day""",
                          (u.company_id, int(year), int(month), float(goal), float(goal_ativ), float(goal_manu)))
-            conn.commit()
-            st.success(f"Metas salvas! Meta ativ/dia: {goal_ativ:.0f} | Meta manu/dia: {goal_manu:.0f}")
+            conn.commit(); st.success(f"Metas salvas! Ativ/dia: {goal_ativ:.0f} | Manu/dia: {goal_manu:.0f}")
 
     with tabs[5]:
         st.subheader("Usuários e permissões")
         conn = get_conn()
         rows = fetch_all(conn, "SELECT id, username, role, is_active, created_at FROM users WHERE company_id=? ORDER BY id DESC", (u.company_id,))
         df   = df_from_rows(rows)
-        if not df.empty:
-            st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
+        if not df.empty: st.dataframe(df.drop(columns=["id"]), use_container_width=True, hide_index=True)
 
         with st.form("user_add"):
             st.markdown("**Adicionar usuário**")
+            st.caption("💡 Para técnico: use o username **igual ao nome do técnico** (ex: nome 'Enio' → usuário 'enio') e selecione a permissão **Técnico**.")
             username = st.text_input("Usuário (login)")
-            role     = st.selectbox("Permissão", ["admin", "operator", "viewer"])
+            role     = st.selectbox("Permissão", ["admin","operator","viewer","technician"],
+                                    format_func=lambda x: {"admin":"Administrador","operator":"Operador","viewer":"Visualização","technician":"Técnico"}[x])
             password = st.text_input("Senha inicial", type="password")
             ok       = st.form_submit_button("Criar usuário", use_container_width=True)
             if ok:
-                if not username.strip() or not password:
-                    st.error("Informe usuário e senha.")
+                if not username.strip() or not password: st.error("Informe usuário e senha.")
                 else:
                     try:
                         conn.execute("INSERT INTO users(company_id, username, password_hash, role, is_active, created_at) VALUES (?,?,?,?,1,?)",
@@ -1012,20 +1136,19 @@ def page_admin():
                     conn.execute("UPDATE users SET is_active=? WHERE company_id=? AND username=?",
                                  (0 if is_active else 1, u.company_id, sel_user))
                     conn.commit(); st.success("Status atualizado."); st.rerun()
-                new_role = c2.selectbox("Permissão", ["admin","operator","viewer"],
-                                        index=["admin","operator","viewer"].index(role))
+                new_role = c2.selectbox("Permissão", ["admin","operator","viewer","technician"],
+                                        index=["admin","operator","viewer","technician"].index(role) if role in ["admin","operator","viewer","technician"] else 0,
+                                        format_func=lambda x: {"admin":"Administrador","operator":"Operador","viewer":"Visualização","technician":"Técnico"}[x])
                 if st.button("Salvar permissão", use_container_width=True):
                     conn.execute("UPDATE users SET role=? WHERE company_id=? AND username=?",
                                  (new_role, u.company_id, sel_user))
                     conn.commit(); st.success("Permissão atualizada."); st.rerun()
-
                 st.divider()
                 st.markdown("**Resetar senha do usuário**")
-                new_pass  = st.text_input("Nova senha (reset)",   type="password", key="reset_pass")
+                new_pass  = st.text_input("Nova senha",          type="password", key="reset_pass")
                 new_pass2 = st.text_input("Confirmar nova senha", type="password", key="reset_pass2")
                 if st.button("Resetar senha", type="primary", use_container_width=True):
-                    if not new_pass or new_pass != new_pass2:
-                        st.error("As senhas não conferem.")
+                    if not new_pass or new_pass != new_pass2: st.error("As senhas não conferem.")
                     else:
                         update_user_password(u.company_id, sel_user, new_pass)
                         st.success("Senha resetada com sucesso.")
@@ -1034,6 +1157,9 @@ def page_admin():
 # MAIN
 # ==============================
 def main():
+    st.set_page_config(page_title="TechnoOps Core", page_icon="🟣", layout="wide",
+                       initial_sidebar_state="expanded")
+    inject_css()
     init_db()
 
     if not get_user():
@@ -1043,24 +1169,26 @@ def main():
     sidebar_header()
     u = get_user()
 
-    menu_opcoes = ["Dashboard", "Resumo Mensal", "Indicadores"]
+    # ── Técnico: menu exclusivo ───────────────────────────────────────
+    if u.role == "technician":
+        page = st.sidebar.radio("Menu", ["Meus Indicadores"])
+        page_meu_indicador()
+        return
+
+    # ── Demais roles ──────────────────────────────────────────────────
+    menu_opcoes = ["Painel", "Resumo Mensal", "Indicadores"]
     if u.role in {"admin", "operator"}:
         menu_opcoes.insert(1, "Lançamento Diário")
     if u.role == "admin":
-        menu_opcoes.append("Admin")
+        menu_opcoes.append("Administração")
 
-    page = st.sidebar.radio("Navegação", menu_opcoes)
+    page = st.sidebar.radio("Menu", menu_opcoes)
 
-    if page == "Dashboard":
-        page_dashboard()
-    elif page == "Lançamento Diário":
-        page_daily_entry()
-    elif page == "Resumo Mensal":
-        page_monthly_summary()
-    elif page == "Indicadores":
-        page_technician_kpis()
-    elif page == "Admin":
-        page_admin()
+    if page == "Painel":               page_dashboard()
+    elif page == "Lançamento Diário":  page_daily_entry()
+    elif page == "Resumo Mensal":      page_monthly_summary()
+    elif page == "Indicadores":        page_technician_kpis()
+    elif page == "Administração":      page_admin()
 
 if __name__ == "__main__":
     main()

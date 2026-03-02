@@ -62,7 +62,32 @@ p, span, div, h1, h2, h3, h4 { color: white !important; }
 .stDataFrame { background-color: #1E1E1E !important; }
 [data-testid="stNumberInput"] input { background-color: #1E1E1E !important; color: white !important; }
 
-/* Cards semáforo */
+/* ── Forçar "Cardápio" → "Menu" e estilizar sidebar radio ── */
+div[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:has(div[role="radiogroup"]) > div:first-child {
+    display: none !important;
+}
+div[data-testid="stSidebar"] label[data-baseweb="radio"] {
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    transition: background 0.2s, color 0.2s !important;
+    cursor: pointer !important;
+}
+div[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
+    background: rgba(166, 77, 154, 0.35) !important;
+    border-left: 3px solid #F2B233 !important;
+}
+div[data-testid="stSidebar"] label[data-baseweb="radio"][aria-checked="true"] {
+    background: rgba(166, 77, 154, 0.55) !important;
+    border-left: 3px solid #F2B233 !important;
+}
+div[data-testid="stSidebar"] label[data-baseweb="radio"] p {
+    color: #fff !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+}
+div[data-testid="stSidebar"] label[data-baseweb="radio"]:hover p {
+    color: #F2B233 !important;
+}
 .kpi-green  { background: linear-gradient(135deg,#0d3320,#1a5c38); border:1px solid #2ecc71; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
 .kpi-orange { background: linear-gradient(135deg,#3d2400,#6b4000); border:1px solid #f39c12; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
 .kpi-red    { background: linear-gradient(135deg,#3d0000,#6b0000); border:1px solid #e74c3c; border-radius:14px; padding:16px 18px; margin-bottom:8px; }
@@ -206,6 +231,9 @@ def inject_css():
       }}
       button[kind="primary"]   {{ background:{SECONDARY} !important; color:#111 !important; border:0 !important; }}
       button[kind="secondary"] {{ border:1px solid rgba(255,255,255,0.18) !important; color:{TEXT} !important; }}
+      /* Esconder label "Cardápio"/"Menu" do radio na sidebar */
+      div[data-testid="stSidebar"] .stRadio > label {{ display:none !important; }}
+      div[data-testid="stSidebar"] .stRadio > div {{ gap:4px !important; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -734,7 +762,8 @@ def _render_cards(perf_data, show_receita=True):
     cols   = st.columns(n_cols)
     for i, p in enumerate(perf_data):
         with cols[i % n_cols]:
-            receita_html = f"<div style='margin-top:8px;font-size:0.78rem;color:#aaa;text-align:right;'>Receita: R$ {p.get('ReceitaGerada',0):,.0f}</div>" if show_receita else ""
+            receita_html = (f"<div style='margin-top:8px;font-size:0.78rem;color:#aaa;text-align:right;'>"
+                            f"Receita: R$ {p.get('ReceitaGerada',0):,.0f}</div>") if show_receita else ""
             st.markdown(f"""
             <div style="background:#1e1e2f;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:16px 18px;margin-bottom:10px;">
                 <div style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;">
@@ -747,14 +776,20 @@ def _render_cards(perf_data, show_receita=True):
                                 border-radius:10px;padding:10px 12px;">
                         <div style="font-size:0.78rem;color:#ccc;">⚡ Ativação</div>
                         <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaAtiv']:.2f}<span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
-                        <div style="font-size:0.75rem;color:#ccc;">{p['SemAtiv']} {p['StAtiv']}<br>Meta {p['MetaAtivMedia']:.1f} | {p['PctAtiv']:.0f}% cumprido</div>
+                        <div style="font-size:0.75rem;color:#ccc;">
+                            {p['SemAtiv']} {p['StAtiv']}<br>
+                            Meta {p['MetaAtivMedia']:.1f} | Total: {p['AtivTotal']:.0f} ativ | {p['PctAtiv']:.0f}% cumprido
+                        </div>
                     </div>
                     <div style="flex:1;background:{'#0d3320' if p['CorManu']=='kpi-green' else '#3d2400' if p['CorManu']=='kpi-orange' else '#3d0000'};
                                 border:1px solid {'#2ecc71' if p['CorManu']=='kpi-green' else '#f39c12' if p['CorManu']=='kpi-orange' else '#e74c3c'};
                                 border-radius:10px;padding:10px 12px;">
                         <div style="font-size:0.78rem;color:#ccc;">🔧 Manutenção</div>
                         <div style="font-size:1.4rem;font-weight:700;color:#fff;">{p['MediaManu']:.2f}<span style="font-size:0.75rem;color:#aaa;">/dia</span></div>
-                        <div style="font-size:0.75rem;color:#ccc;">{p['SemManu']} {p['StManu']}<br>Meta {p['MetaManuMedia']:.1f} | {p['PctManu']:.0f}% cumprido</div>
+                        <div style="font-size:0.75rem;color:#ccc;">
+                            {p['SemManu']} {p['StManu']}<br>
+                            Meta {p['MetaManuMedia']:.1f} | Total: {p['ManuTotal']:.0f} manu | {p['PctManu']:.0f}% cumprido
+                        </div>
                     </div>
                 </div>
                 {receita_html}
